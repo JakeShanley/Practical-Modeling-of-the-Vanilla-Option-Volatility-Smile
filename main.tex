@@ -1,0 +1,1125 @@
+\documentclass[12pt, a4paper, notitlepage]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage[a4paper,left=1.5in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage{setspace}
+\usepackage[nottoc, numbib]{tocbibind}
+\usepackage{multicol}
+\usepackage[font=small]{caption}
+\usepackage{graphicx}
+\usepackage{float}
+\onehalfspacing
+
+\usepackage{xcolor,colortbl}
+\definecolor{Gray}{gray}{0.85}
+\definecolor{LightCyan}{rgb}{0.88,1,1}
+\definecolor{LightGreen}{RGB}{144,238,144}
+\def\code#1{\texttt{#1}}
+
+\numberwithin{equation}{subsection}
+\numberwithin{figure}{subsection}
+\numberwithin{table}{subsection}
+\setlength\parindent{0pt}
+\setlength{\fboxsep}{0pt}
+
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+\newcommand{\img}[3]
+{
+    \begin{figure}[H]
+	\caption{#1}
+	\centerline{\fbox{\includegraphics[width=1\textwidth]{#2}}}
+	\label{#3}
+    \end{figure}
+}
+\renewcommand{\abstractname}{\large ABSTRACT}
+\newcommand{\newpar}{\newline \newline}
+\newcommand{\bbrepo}{[Link To BitBucket Here]}
+\newcommand{\lambdaVect}{\pmb{\lambda}}
+\renewcommand{\listtablename}{Tables}
+\renewcommand{\listfigurename}{Figures}
+
+\title{\textbf{Practical Modeling of the Vanilla Option Volatility Smile}}
+\author{\textbf{Jacob Shanley}}
+\date{\vspace{-5ex}}
+
+\begin{document}
+\pagenumbering{roman}
+
+\thispagestyle{empty}
+\begin{center}
+    	\textbf
+        {
+        	\large
+    		Practical Modeling of the Vanilla Option Volatility Smile \\~\\~\\
+    		By \\~\\~\\
+    		Jacob Shanley
+            \normalsize
+            \\~\\ 
+            B.A, Physics, Kenyon College \\
+			M.S, Applied Mathematics, University of New Mexico
+    	}
+        \\~\\~\\~\\~\\~\\
+        THESIS \\
+        Submitted in Partial Fulfillment of the \\
+        Requirements for the Degree of \\~\\
+        \textbf
+        {
+        	Masters of Science \\
+            Applied Mathematics
+        }
+        \\~\\
+        The University of New Mexico \\
+        Albuquerque, New Mexico
+        \\~\\
+        \textbf
+        {
+        	May, 2017
+        }
+\end{center}
+
+\newpage
+\begin{center}
+	\large \textbf{Acknowledgements}
+\end{center}
+
+\newpage
+\vspace*{\fill}
+\begin{center}
+	\textit{To my Bubbe and mom, for all their encouragement and help toward completing my degree.  Bubbe passed away on November 5\textsuperscript{th}, 2017.}
+\end{center}
+\vspace*{\fill}
+
+\maketitle
+\begin{center}
+	\textbf
+    {
+    	B.A, Physics, Kenyon College \\
+		M.S, Applied Mathematics, University of New Mexico
+    }
+\end{center}
+
+\begin{abstract}
+
+\end{abstract}
+
+\newpage
+\tableofcontents
+
+\newpage
+\listoffigures
+
+\newpage
+\listoftables
+
+\newpage
+\pagenumbering{arabic}
+\section{Preface} \label{sec:Preface}
+This paper is written with the assumption that the reader has prior knowledge or experience with the fundamental mechanics of the Vanilla\footnote{Vanilla here refers to the standard American Option.  Other types of options exists, such as exotic options.  In fact, insurance plans such as for your car or home can be described as a particular type of non-standard option contract.} American Option contract.  For a novice to the world of options and financial derivatives in general, this section should serve to bring the reader up to speed on the basics.  A more complete and in-depth discussion on American vanilla options is beyond the scope of this project, but if more details are desired, Sheldon Natenberg's \textit{Option Volatility \& Pricing}\textsuperscript{\cite{Natenberg}} is a good place to start.  A reader that has prior knowledge of concepts such as option theoretical values, greeks, volatility, and simple trading strategies may choose to skip the sections outlined in this preface and begin directly with the Introduction (section \ref{sec:Introduction}, page \pageref{sec:Introduction}).
+\newpar
+Three main phases complete this project.  The first involves the gathering, filtering, smoothing, and general processing of market data into a single set of $(x,y)$ inputs.  These inputs are then fed into multiple nonlinear least-squares optimization processes, each working with different functional forms, weighting schemes, data sets, and optimization algorithms (phase two).  Phase three examines the optimization results both from a mathematical perspective and through the eyes of an active trader that must apply theory to practice.
+
+\subsection{A Brief Overview of Financial Derivatives}
+In today's world, there are a lot of different trades that one can make.  Beyond the common and simple purchase or sale of an underlying asset (such as a stock), a handful of special types of contracts called derivatives also exist.  The name `derivative' comes from the fact that the contracts derive their value from the performance of the underlying asset.  In its most basic form, a derivative is a contract between two parties that specify conditions under which a decided upon form of payment is to be made.  Conditions can include stipulations such as contract expiration dates, values and definitions of the underlying variables, and notational amount.
+\newpar
+There are two main groups of financial derivatives: Over the Counter (OTC) and Exchange-Traded Derivatives (ETD).  Some types of OTC derivative contracts include swaps, forward rate agreements, and exotic options (options on vanilla options, for example).  An OTC derivative contract is one that is traded and privately negotiated without going through an exchange or intermediary.  ETD contracts include ones such as vanilla options or futures, and are traded through an exchange.  The scope of this project covers only the ETD contracts categorized as Vanilla American Options.
+\newpar
+One of the largest option exchanges today is the Chicago Board of Options Exchange (CBOE).  Historically, exchange-traded derivatives were primarily traded on a trading floor.  While the CBOE trading floor still exists and is still used, most of the trading is now electronically done - traders make trades on the exchange either through automated computer algorithms or through manual click-trading through software.
+
+\subsection{The Vanilla American Option Contract}
+Vanilla options are exchange-traded contracts that give the owner the right, but not the obligation, to buy or sell a specified amount of an underlying asset.  The contract stipulations also include an expiration date and a decided upon fixed sale price called the \textit{strike} (or exercise) price.  There are two major styles of exchange-traded, vanilla options:  American and European.  For the European Option, the owner has the right (not the obligation) to execute the contract on, but \underline{\textbf{not before}} the contract expiration date.  In the case of the American Option, the owner has the right (not the obligation) to execute the contract on \underline{\textbf{or before}} the contract expiration date.  It is the `execute anytime before expiration' property of American Options that can render the derivative much more difficult to model.  For options on American Equities, the typical amount of underlying asset is 100 shares per option contract\footnote{There are also `mini' American Options that only involve 10 shares of the underlying asset.}.  When an option is executed, all debts must be paid immediately and in full - any profits or losses are unrealized until the position is liquidated.
+\newpar
+For both American and European Option contract styles, there are two contract types: Calls and Puts.  An American Call Option gives the right to buy (or take a \textit{long} market position in) a given asset at a fixed price (called the \textit{strike} price) at or before a specified date, or \textit{expiration}.  An American Put Option gives the owner the right to sell (or take a \textit{short} market position in) a given asset at a \textit{strike} price at or before the \textit{expiration} date.  The scope of this paper covers only that of American Options, but the European Option contract types are identical to their American counterparts except for the fact that, as the owner of a European Option, you cannot execute the contract before the expiration date, while the owner of an American Option can choose to execute at any time before contract expiration.
+\newpar
+The quantity of option contracts available on an exchange can be a staggering amount for those not accustomed to working with options on a day-to-day basis.  In February 2017 on the CBOE, there were as many as 11 expiration dates available for option contracts on the American equity AAPL, with some expirations having 100 strikes or more.  This meant that during this time, an option trader trading AAPL had as many as 2200 Call or Put options to choose from for just the one asset.  An option trader looking at the stock ticker SPY\footnote{SPY is the SPDR S\&P 500 ETF Trust.  Its value follows the actual S\&P 500 Index.  SPY is traded on the NYSEARCA exchange.} on the CBOE would be able to choose from as many as 14 expiration dates, each containing as many as 200 strikes or more, giving the trader over 5600 option contracts to choose from for SPY alone.  A typical trading desk with a single primary trader can be responsible for options on as many as 30 or more underlying assets simultaneously.  To help work with and make sense of all that information, the option contracts are grouped by underlying asset by expiration, but even then making trading decisions can be difficult.
+
+\subsubsection{Valuation}
+An option contract itself comes with a price tag for the buyer.  Called the option's \textit{premium}, the contract's price can be separated into two components: intrinsic value and extrinsic value (also called time value).
+\newpar
+The intrinsic value is the amount that a trader would make should he or she exercise the option and then immediately close out the corresponding underlying position at the current market price.  For example, suppose an underlying asset is trading at \$100.  Then the owner of the \$90 call could exercise the option and as a result own 100 shares at \$90 per share.  But, since the current price of the underlying asset is \$100, the trader could immediately close out the underlying position and net \$10 per share from the entire transaction.  Therefore the intrinsic value for the \$90 call in this example is \$10.
+\newpar
+A call will only have intrinsic value if its strike (or exercise) price is less than the current market price of the underlying asset.  Similarly, a put will only have intrinsic value if its strike (or exercise) price is greater than the current underlying price.  Intrinsic value cannot be less than zero by definition.  In simple mathematical terms,
+\begin{equation*}
+	\begin{split}
+		\text{Call Intrinsic Value} = \max(AssetMarketPrice - Strike, 0) \\
+    	\text{Put Intrinsic Value} = \max(Strike - AssetMarketPrice, 0).
+	\end{split}
+\end{equation*}
+
+An option which has positive intrinsic value is referred to as an \textit{in-the-money} option by the amount of the intrinsic value, while an option which has no intrinsic value is said to be an \textit{out-of-the-money} option.  An out-of-the money option premium can be attributed solely to its extrinsic, or time value.  The extrinsic value is the value of the option premium due to factors such as time to expiration and volatility.
+\newpar
+An option is referred to as \textit{at-the-money} if it has an exercise price that is equivalent to the forward price of the underlying asset (that is, the price of the asset upon expiration date given today's price, rate, and dividends).  An at-the-money option has no intrinsic value and is thus technically out-of-the-money.  In fact, an at-the-money option premium carries the greatest amount of time value and is usually heavily traded.
+
+\subsubsection{Basic Trading Strategies}\label{sec:BasicTradingStrategies}
+Any simple or complex option trading strategy that a trader employs is made up of some combination of calls and/or puts.  To aid in understanding each trading strategy, it is helpful to first analyze the consequences of buying or selling an individual option in terms of potential profit and loss (P\&L)\footnote{A typical purchase or sale of an option is usually met with a corresponding trade in the actual underlying asset.  This corresponding trade is called a hedge, and is done in a way so that the option position remains neutral to small changes in the underlying asset.  Hedges can come in many shapes and forms and are often updated constantly as the price of the underlying asset changes.  Indeed, some may even choose to hedge an option trade with other option trades.}.
+\newpar
+Suppose a trader is looking at an option board for some underlying asset on the CBOE.  In particular, suppose he or she is looking at an expiration that offers the following options:
+%	Note that the table column colors may appear to overwrite some of the table vertical lines, however the table will look fine in the actual PDF.
+\begin{center}
+  \captionof{table}{Example Option Board for some Expiration and Underlying Asset}
+  \label{table:ExampleOptionBoard}
+  \begin{tabular}{ |c|c| >{\columncolor{Gray}}c |c|c| }
+      \hline
+      \rowcolor{LightCyan}
+      \textbf{Call Bid} & \textbf{Call Ask} & \textbf{Strike} & \textbf{Put Bid} & \textbf{Put Ask} \\
+      \hline
+      17.15 & 17.40 & 155 &  3.50 &  3.65 \\
+      13.65 & 13.85 & 160 &  4.90 &  5.10 \\
+      10.50 & 10.75 & 165 &  6.80 &  7.00 \\
+      7.85 	&  8.10 & 170 &  9.15 &  9.40 \\
+      5.75 	&  5.90 & 175 & 12.00 & 12.20 \\
+      4.05 	&  4.20 & 180 & 14.65 & 15.80 \\
+      2.79 	&  2.91 & 185 & 18.20 & 19.90 \\
+      \hline
+  \end{tabular}
+\end{center}
+For this example underlying asset and expiration date, the CBOE is offering strikes from 155 to 185 in steps of five dollars\footnote{Note that it is not always the case that strikes are evenly spaced apart.  In many cases the strikes alternate in spacing, or even change completely, usually depending on how far the strike is from the current underlying price.}.
+\newpar
+Now, suppose a trader wants to buy the 170 Call.  To make this trade, the trader must pay the current market ask (or offer) price for the option.  From the option board in Table \ref{table:ExampleOptionBoard}, buying the 170 Call will incur a premium\footnote{Recall that a standard American Option contract involves 100 shares of the underlying asset.  This means that if the price of the option is \$8.10, then the total cost to buy the option is actually \$810} cost of \$8.10.  This means that the trader will break even if the underlying asset reaches \$178.10.  If the underlying asset becomes \$170 or less, the option will expire worthless and the trader will lose the entire \$8.10 premium paid.  If the underlying asset becomes greater than \$178.10, the trader will net a profit equal to the underlying price less \$178.10.
+\newpar
+Let $S$ be the current price of the underyling asset.  Then the unrealized P\&L from buying the 170 Call is:
+\begin{equation}
+\text{Unrealized P\&L} = 
+\begin{cases}
+	  -\$8.10 		& S <  \$170 \\
+      S - \$178.10 	& S \geq \$170.
+\end{cases}
+\end{equation}
+
+If the trader instead wants to sell the 170 Call, then since the option's bid market price is listed as \$7.85, the trader would gain the \$7.85 option premium from the sale.  Thus, unrealized P\&L from selling the \$170 Call is:
+
+\begin{equation}
+  \text{Unrealized P\&L} = 
+  \begin{cases}
+        \$7.85 			& S <  \$170 \\
+        \$177.85 - S 	& S \geq \$170,
+  \end{cases}
+\end{equation}
+
+where $S$ here again represents the current underlying price.
+\newpar
+Let $p$ be the option premium, $k$ be the option strike, and $S$ be the current stock price.  Then in general, one can describe the unrealized P\&L for taking a long or short position in either a call or put as follows:
+\begin{enumerate}
+\item Buying a call (taking a long market position, figure \ref{fig:LongACall}):
+      \begin{equation*}
+          \text{Long Call P\&L} = 
+          \begin{cases}
+              -p 				& S \leq k \\
+               (S - k) - p	& S > k
+          \end{cases}
+      \end{equation*}
+\item Selling a call (taking a short market position, figure \ref{fig:ShortACall}):
+      \begin{equation*}
+        \text{Short Call P\&L} = 
+        \begin{cases}
+              p 				& S \leq k \\
+              (k - S) + p  	& S > k
+        \end{cases}
+      \end{equation*}
+\item Buying a put (taking a long market position, figure \ref{fig:LongAPut}):
+      \begin{equation*}
+        \text{Long Put P\&L} = 
+        \begin{cases}
+                (k - S) - p 	& S < k \\
+                -p 			& S \geq k
+        \end{cases}
+      \end{equation*}
+\item Selling a put (taking a short market position, figure \ref{fig:ShortAPut}):
+      \begin{equation*}
+      	\text{Short Put P\&L} = 
+        \begin{cases}
+                (S - k) + p 	& S < k \\
+                p 				& S \geq k
+        \end{cases}
+      \end{equation*}
+\end{enumerate}
+
+\begin{multicols}{2}
+  \begin{figure}[H]
+      \caption{Long a call}
+      \centerline{\includegraphics[width=0.5\textwidth]{Long_Call_Position}}
+      \label{fig:LongACall}
+  \end{figure}
+  \begin{figure}[H]
+      \caption{Short a call}
+      \centerline{\includegraphics[width=0.5\textwidth]{Short_Call_Position}}
+      \label{fig:ShortACall}
+  \end{figure}
+\end{multicols}
+
+\begin{multicols}{2}
+  \begin{figure}[H]
+    \caption{Long a put}
+    \centerline{\includegraphics[width=0.5\textwidth]{Long_Put_Position}}
+    \label{fig:LongAPut}
+  \end{figure}
+  \begin{figure}[H]
+    \caption{Short a put}
+    \centerline{\includegraphics[width=0.5\textwidth]{Short_Put_Position}}
+    \label{fig:ShortAPut}
+  \end{figure}
+\end{multicols}
+
+Some combinations of the simple strategies listed above are used frequently enough to be given special names.  For example, the following strategies are often applied for intra-expiration options\textsuperscript{\cite{Natenberg}}:  
+
+\begin{enumerate}
+	\item Call Ratio Spread
+    	\begin{enumerate}
+    		\item \textit{long}:  Sell calls at a lower exercise price and buy calls at a higher exercise price, with more bought than sold.
+            \item \textit{short}:  Buy calls at a lower exercise price and sell calls at a higher exercise price, with more sold than bought.
+    	\end{enumerate}
+	\item Put Ratio Spread
+    	\begin{enumerate}
+    		\item \textit{long}:  Buy puts at a lower exercise price and sell puts at a higher exercise price, with more bought than sold.
+            \item \textit{short}:  Sell puts at a lower exercise price and buy puts at a higher exercise price, with more sold than bought.
+    	\end{enumerate}
+	\item Straddle
+    	\begin{enumerate}
+    		\item \textit{long}:  Buy calls and puts at the same exercise price.
+            \item \textit{short}:  Sell calls and puts at the same exercise price.
+    	\end{enumerate}
+    \item Strangle
+    	\begin{enumerate}
+    		\item \textit{long}: Buy puts at a lower exercise price and calls at a higher exercise price, \underline{or} buy calls at a lower exercise price and buy puts at a higher exercise price.
+            \item \textit{short}:  Sell puts at a lower exercise price and calls at a higher exercise price, \underline{or} sell calls at a lower exercise price and puts at a higher exercise price.
+    	\end{enumerate}
+    \item Call Butterfly
+    	\begin{enumerate}
+    		\item \textit{long}:  Buy a call at a lower exercise price, sell two calls at a middle exercise price, buy a call at a higher exercise price.
+            \item \textit{short}:  Sell a call at a lower exercise price, sell two calls at a middle exercise price, sell a call at a higher exercise price.
+    	\end{enumerate}
+    \item Put Butterfly
+    	\begin{enumerate}
+    		\item \textit{long}:  Buy a put at a lower exercise price, sell two puts at a middle exercise price, buy a put at a higher exercise price.
+            \item \textit{short}:  Sell a put at a lower exercise price, sell two puts at a middle exercise price, sell a call at a higher exercise price.
+    	\end{enumerate}
+\end{enumerate}
+Note that the relative quantity of each option involved in the above strategies has been explicitly left out.  This is due to the fact that the above strategies are usually done in such a way as to remain \textit{delta neutral}.  In simple terms, is done in a way so that the position remains neutral to small changes in the underlying asset.  The concept of delta is touched upon further in section \ref{sec:VolAndGreeks}.
+\newpar
+There are a number of other common trade combinations not mentioned in the above list such as time spreads, synthetic positions, conversions, reversals, and jelly rolls.  These are beyond the scope of this project.  Should such trade combinations pique the reader's interest, he or she can find more info in Sheldon Natenberg's \textit{Option Volatility \& Pricing}\textsuperscript{\cite{Natenberg}}.
+
+\subsubsection{The Greeks}\label{sec:VolAndGreeks}
+A seasoned option trader will be very familiar with the meanings of delta, gamma, theta, vega, and rho as they pertain to option trading.  Each of these values represent a certain aspect of a given option position or theoretical value, and help the trader understand and manage risk.  All together, this group is often called The Greeks\footnote{Since vega is not a greek letter, kappa is often used instead.}.
+\newpar
+\textbf{Delta} \newline
+In general, an option delta represents the number of underlying contracts to option contracts required to establish a neutral hedge.  An option's delta can have several interpretations such as rate of change, hedge ratio, theoretical underlying position, or equivalent underlying position.  The interpretation utilized by the trader can depend on his or her trading strategy\textsuperscript{\cite{Natenberg}}.  However no matter which interpretation is used, the delta is generally described as a number between 0 and 100 for calls (0 for far out-of-the-money, 100 for deeply in-the-money), and between -100 and 0 for puts\footnote{The delta is usually represented as a number from 0 to 1 for calls and -1 to 0 for puts when applying mathematically inclined option pricing models, however a trader may simply drop the decimal point when communicating in common option trading vernacular.} (-100 for deeply in-the-money and 0 for far out-of-the-money).  At-the-money calls have deltas of approximately 50 while at-the-money puts have deltas of approximately -50.
+\newpar
+\textbf{Gamma} \newline
+The gamma is simply the derivative of the delta with respect to the underlying asset.  In other words, it is the rate at which the option delta changes with respect to a change in the underlying asset price.  For example, if an option has a gamma of 1, then for each dollar the underlying asset rises, the option will gain 1 delta.  Similarly, for each dollar the underlying asset price falls, the option will lose 1 delta.
+\newpar
+At-the-money options have the highest gamma compared to intra-expiration in-the-money and out-of-the-money options.  If volatility rises, then the gamma of an in- or out-of-the-money option rises while the gamma of an at-the-money option falls.  Similarly, if the volatility falls, then the gamma of an in- or out-of-the-money option falls while the gamma of an at-the-money option rises.
+\newpar
+\textbf{Theta} \newline
+Also called the time decay factor, the theta is the rate at which an option loses value as time passes.  It is typically expressed in dollars lost per day.  For example, if an option has a theta of 0.03, then the trader will expect the option to decay at a rate of \$0.03 in value per day with no change in other market conditions.
+\newpar
+The concept of time decay can be very controversial.  There is a sense of `trading time' (time the market is open) vs. `standard time' (raw time as one would observe on his or her watch).  Trading time is often affected by holidays, and is usually used when determining an option's value.  There is also a notion of inter-day time decay, where a nonlinear function is used to represent the passage of time within a single trading day.
+\newpar
+At-the-money options have the greatest theta compared to intra-expiration in- or out-of-the-money options.  The theta of an in-the-money option increases as the contract expiration date approaches.  If one wishes to compare options that are inter-expiration, an at-the-money option that is closer to expiration will always decay quicker (have a higher theta) than a long term at-the-money option.
+\newpar
+\textbf{Vega} \newline
+Also sometimes referred to as the kappa, the vega is the derivative of an option's theoretical value with respect to the option's volatility.  Basically, the sensitivity of the option's theoretical value to a change in volatility.  It is usually represented in point change in theoretical value per one percentage point change in volatility.  The vega is always nonnegative, since all options gain value with rising volatility.  If an option has a vega of 0.07, then for each percentage point change in volatility, we can expect a \$0.07 change in the theoretical value for the option.
+\newpar
+At-the-money options have the greatest vega compared to their intra-expiration counterparts.  However, out-of-the-money options have the greatest theta as a percentage of theoretical value.  As time to expiration draws nearer, the vega of any option will decrease.  An option with a longer time to expiration is always more sensitive to change in volatility than an option with a shorter time to expiration (with otherwise identical contract specifications, of course).  Usually the vega of at-the-money options is stable with respect to changes in volatility.  In other words, a change in volatility doesn't change the at-the-money option's vegas significantly.
+\newpar
+\textbf{Rho}\newline
+The rho represents the sensitivity of an option's theoretical value to a change in interest rates.  Interest rates have a small, but important affect on an option's theoretical value.  When dealing with the volatility smile, it is important to have the interest rate correct in order to achieve good fits.  An incorrect interest rate can often be quickly identified by looking at the theoretical values of the at-the-money call and put.  In theory the call and put at-the-money theoretical values must be the same (or very nearly).  If there is a stark difference at the values of the at-the-money options, then it may be indicative of a poorly chosen interest rate.
+
+\subsubsection{Volatility}
+When determining the theoretical value of an option, volatility plays one of the most important roles.  Changes in the volatility assumption can have significant change on the option's value.  One way to think about volatility is as a rate of return.  However, the difference between volatility and an interest rate is that the interest rate is a one-directional rate (positive rates provide only a positive rate of return, negative rates provide only a negative rate of return).  If a trader were to invest in an option with any nonzero volatility\footnote{Note that volatility is always greater than zero.  An option with a volatility less than or equal to zero has no extrinsic value, because there is no probability of any price change.}, the instrument may go either up or down in price.
+\newpar
+There are many models and theories on how to calculate volatility. The Black-Scholes Model, for example, can be solved for volatility when given an option price.  In addition to being a continuous time model, it also assumes the volatility of an underlying instrument is constant over the life of the option, and that this volatility is continuously compounded.  Additionally, it assumes the stock price moves in geometric Brownian motion.  The result of these (and many other) assumptions is that the possible prices of the option at expiration are lognormally distributed.  In general, one need not be limited to such assumptions - some models assume other price distributions or even a stochastic volatility. An in-depth discussion on how to obtain the implied volatility is the focus of many papers and books and is beyond the scope of this project.
+\newpar
+Some types of volatility include future volatility, historical volatility, and implied volatility.  For this project, implied volatility will be used exclusively - the volatility calculated from the current market price of an option.  Since it is not possible to invert the Black-Scholes model, one could use the Newton-Raphson method to obtain the implied volatility at a given option price as
+\begin{equation*}
+	\sigma_{i+1} = \sigma_{i} - \frac{y_{i} - p}{v_{i}},
+\end{equation*}
+where $p$ is the option's premium, $\sigma_i$ is the option's volatility at step $i$, $y_{i}$ is the option's theoretical value at volatility $\sigma_i$, and $v_i$ is the option's vega at volatility $\sigma_i$.
+
+\subsubsection{Pricing Models}\label{sec:PricingModels}
+There are a handful of publicly available pricing models (such as the Black-Scholes model for European Options).  However, with a superior pricing model (or even knowing the competition's pricing model), one could have significant edge in the marketplace.  It is for this reason that most pricing models are proprietary, developed in-house, and are tailored to the specific needs of the trading firm.  Generally, a typical option pricing model will require at minimum the following inputs to calculate an option's theoretical value or volatility:
+\begin{enumerate}
+	\item	Exercise Price (strike)
+    \item	Option Type (call or put)
+    \item	Time to Expiration
+    \item	Price of the Underlying Asset
+    \item	Interest Rates
+    \item	Dividends
+    \item	Volatility (if calculating an option's theoretical value) or price (if calculating an option's volatility).
+\end{enumerate}
+For American Options, some published models include quadratic approximation models like the Barone-Adesi and Whaley model, or lattice-based models such as the binomial, trinomial, or adaptive mesh model.  In this project, a proprietary trinomial-based model will be used.  However, since the model is used to simply convert between prices and volatilities, and then back to prices, it is logically feasible to achieve similar results found in this paper with any consistent pricing model.
+
+\subsection{The Vanilla American Option Volatility Smile}
+The `volatility smile' is the name given to the plot of volatility vs. strike for intra-expiration options.  It can be constructed from taking the option price and converting it to volatility for each option of that type in a single expiration, and then plotting the results as a function of strike.  For example, suppose the following graph is a plot of the call prices for a single expiration date of some underlying asset:
+
+\begin{figure}[H]
+	\caption{Example Intra-Expiration Call Prices By Strike}
+	\centerline{\includegraphics[width=1\textwidth]{Example_Call_Price_Plot}}
+\end{figure}
+
+If one were to calculate the volatilities given the above prices, the resulting plot would look like:
+
+\begin{figure}[H]
+	\caption{Example Intra-Expiration Call Volatilities By Strike}
+	\centerline{\includegraphics[width=1\textwidth]{Example_Call_Vol_Plot}}\label{fig:ExCallVolsByStrike}
+\end{figure}
+
+From figure \ref{fig:ExCallVolsByStrike}, it should be clear why it is colloquially called a smile\footnote{Sometimes an option's expiration is set close before an underlying asset's earnings announcement date.  In this scenario (and possibly others), as the expiration date (and earnings announcement) draw nearer, the `smile' can in fact turn into a `frown'.}.
+\newpar
+This project includes an analysis of various ways one can parameterize, optimize, and utilize the volatility smile.  In particular, it provides a start-to-finish approach for creating nonlinear least-squares optimized volatilities and making automated trading decisions from those theoretical values.
+\newpar
+The volatility smile is heavily relied upon in the world of options trading.  Often, a trader may have a handful of automated algorithms working rapidly and simultaneously\footnote{A typical algorithm can make a trading decision on the order of microseconds or better.  In many cases, nanoseconds.  In many cases, usually those that utilize Field Programmable Gate Arrays (FPGA's), information is processed fast enough that relativistic physics must be taken into account.}.  These algorithms depend on the theoretical value for the option, which depends directly on the volatility that the trader has set for the option.  The volatility is typically set through an optimization process, given that there are thousands of options spanning multiple stocks that the trader will trade at once.
+
+\newpage
+\section{Introduction} \label{sec:Introduction}
+The goal of this project is to present a practical analysis of modeling what is known in the option trading world as the volatility smile.  In particular, how a chosen functional form, optimization process, or trading style can potentially affect a firm's profit or loss.  There are a number of papers that discuss how to model the volatility smile, but few truly present the practical implications of a particular model choice.  Moreover, even fewer papers discuss in detail the nontrivial and equally important steps of market data collection, filtering, and processing.  It is in this project that all steps of the process are examined;  from the collection of the market data to the resulting theoretical values and how each step in the entire process can affect a trading firm's bottom line.  Otherwise, it is not immediately clear how a particular choice in volatility smile parameterization of observed, arbitrage-free market data can result in an optimization process that yields an arbitrage-full set of theoretical values.
+\newpar
+Although there are many types of financial derivatives to choose from, the scope of this paper covers only that of American Options on American Equities.  This particular derivative was chosen because the data is readily available and years of working in a small trading prop shop allow me to speak empirically on many concepts.  While it may be possible to apply the concepts here to other derivatives such as the European Option or American Options on other assets besides American Equities, lack of explicit experience lends caution from commenting on such situations.
+\newpar
+This project examines options on four American equities.  For each expiration date for each equity, a unique combination of parameterization, weighting scheme, and trading paradigm were chosen.  At the end of each trading day for a period of 30 days\footnote{In fact, a market snapshot taken at five minutes to close was used.  This was done for three reasons:  First, historical market data can more readily be found in the form of end-of-day prices.  Second, data taken exactly at market close is impossible to trade on.  Third, data is often `noisier' as market close approaches and is not always very representative of what is typically seen throughout the trading day.}, each combination of equity, expiration, parameterization, weighting scheme, and trading paradigm will be simulated.  Over the course of the 30 day time frame, the results will be discussed and analyzed.
+\newpar
+Naturally, the project setup results in a large number of simulations.  To simplify and streamline the analysis process, two C\# software programs were written: one to save market data and trader inputs to a database, and the other to run simulations from those inputs.
+\newpage
+\section{Methods}
+Once a particular stock, expiration, volatility smile parameterization, weighting scheme, and trading strategy are chosen, the complete start-to-finish analysis of the volatility smile requires three steps:
+\begin{enumerate}
+	\item Gather and process the market data.  Market data can often be `noisy', and multiple snapshots of the same dataset should be gathered throughout the desired timeframe.  Additionally, the data must be converted from market prices into volatilities for future analysis.\label{Analysis:MktDataProcessingStep}
+    \item Find the least least-squares fit of the volatility data given the chosen model function and chosen weighting scheme for each market data snapshot in step \ref{Analysis:MktDataProcessingStep}. \label{Analysis:RunOptimizationStep}
+    \item Run a trading simulation given the chosen trading strategy, optimized data from step \ref{Analysis:RunOptimizationStep}, and the raw unfiltered market data.
+\end{enumerate}
+Specific details on the above three step process are discussed in the following subsections.
+
+\subsection{Market Data Processing}
+\label{subsec:MarketDataProcessing}
+The importance of the infrequently discussed process of gathering and filtering the market data can be captured with the aphorism `garbage in, garbage out'.  Simply put, even the most superior models will produce poor results if the data given to it has not been properly vetted.  This section briefly discusses the details on how data was gathered and filtered prior to the parameterization and optimization processes.
+
+\subsubsection{Collection of Data}\label{sec:CollectionOfData}
+For this project, market data snapshots were collected\footnote{A separate C\# program was written which queried a third-party API provided by MayStreet, LLC.  Their website is http://www.maystreet.com/.  For a free source of option data, one can go to http://www.cboe.com/, the main website for the Chicago Board of Options Exchange.} every minute on Monday, February 12\textsuperscript{th}, 2018 for all the expiration dates provided by the CBOE for the stocks TSLA and NVDA.  Once the data was obtained, it was saved into separate files for each underlying asset in \code{JSON}\footnote{\code{JSON} is commonly known in the software engineering world as Java Standard Object Notation} format.
+\newpar
+For each underlying asset, data collected includes:
+    \begin{enumerate}
+    	\item	The National Best Bid and Offer (NBBO) prices for each listed option.
+        \item	The bid and ask prices of the underlying asset.
+        \item	A set of expected or announced future dividends, if any.
+        \item	The carry and premium rates for each expiration, chosen to best `line up'\footnote{`line up' here refers to the theory that the at-the-money call and put prices must be equivalent.  It is possible to find the implied carry rate by simply trying to find the rate that best makes the at-the-money call and put theoretical values equal.  There are some cases where the trader will intentionally choose an incorrect carry rate in order to help drive his algorithms to develop a particular position.} the option board.
+        \item	Time to expiration that accounts for trading time and holidays.
+    \end{enumerate}
+
+\subsubsection{Converting to Volatility}\label{sec:ConvertingToVol}
+A proprietary variation of a trinomial lattice based option pricing model was chosen for this project.  This was done for two reasons: to ensure accuracy and direct applicability of the results here to the trading paradigms of my current employer, and because writing an American Option pricing model is beyond the scope of this project.  To convert to and from option theoretical value and volatility, this particular model requires the inputs of: strike, option type, time to expiration (in years), price of the underlying asset (here, the midpoint was used), the expiration's carry and premium rates, and dividends (if any).  To obtain a volatility from an option's price, an additional parameter, denoted as the starting volatility, was required.
+
+\subsubsection{Filtering Methods}\label{sec:FilteringMethods}
+Once the four sets of call bid IV, call ask IV, put bid IV, and put ask IV per strike per expiration were obtained, a significant amount of filtering algorithms are required to produce a single set of strike-volatility data points.  This filtering process utilized three C\# algorithms:
+
+\begin{enumerate}
+	\item \textbf{GetBestBidAskIvMarket}:  This method converts our quad dataset of (Strike, CallBidIv, CallAskIv, PutBidIv, PutAskIv) into (Strike, BidIv, AskIv), an option type-independent dataset.  ``Best'' here is defined as the IV which yields the BidIv and AskIv pair which are closest to eachother, i.e the `tightest' market.  This method uses AdjustRawBidIvs (see algorithm \ref{item:AdjustRawBidIvs}) and AdjustRawAskIvs (see algorithm \ref{item:AdjustRawAskIvs}).  Additionally it prevents strikes that have sparse data or volatility calculation errors from being included in the input data to pass to the optimization algorithm. 
+    \item \textbf{AdjustRawBidIvs}: This method attempts to prevent BidIvs that are theoretically impossible, or volatilities that could be used to arbitrage the market.  In other words, make sure that as you go away from at the money, that no BidIv is smaller than it's surrounding IV's.  If you find an IV where the IV at the previous strike AND next strike IV's are both more than it, then you modify that IV to be linearly interpolated between its surrounding strike BidIv's.  Repeat until there are no more places to interpolate or until you’ve exceeded 5s of computation time.\label{item:AdjustRawBidIvs}
+    \item \textbf{AdjustRawAskIvs}:  This method attempts to prevent AskIvs that are theoretically impossible, or volatilities that could be used to arbitrage the market.  In words: Make sure that as you go away from at the money, that no AskIv is bigger than it's surrounding IV's.  If you find an IV where the IV at the previous strike AND next strike Iv's are both less than it, then you modify that IV to be linearly interpolated between its surrounding strike AskIvs.  Repeat until there are no more places to interpolate or until you’ve exceeded 5s of computation time.\label{item:AdjustRawAskIvs}
+\end{enumerate}
+For the raw C\# code of the above methods, please see the BitBucket repository at \bbrepo
+
+\subsection{Volatility Smile Parameterizations}\label{sec:VolSmileParameterizations}
+In order for a parameterization to be successful in a trading environment, it must first and foremost fit the volatility data closely.  If one has a bad parameterization, then both the trader and their automated trading algorithms will be poorly informed when making trading decisions.  To illustrate this fact, the following parameterizations are examined in this project.
+
+\subsubsection{Basic Parameterizations}\label{subsec:BasicParameterizations}
+\begin{enumerate}
+	\item \textbf{Raw Filtered Mid-Market}
+    \newline Simply use the un-smoothed mid-market IV for each strike.  This is the equivalent of a cubic spline that goes through each point.  This `parameterization' scheme serves as a control group.
+    \item \textbf{Linear} 
+    \newline A simple linear parameterization $y = a + bx$, with parameters $a,b$.  This clearly is a terrible parameterization of the volatility smile, but will help highlight how a bad model can affect the overall profit and loss.
+    \item \textbf{Parabolic}
+    \newline A simple parabolic parameterization $y = a + bx + cx^2$, with parameters $a,b,c$.  It is not so clear that this parameterization is not great either.  In particular, strikes around at the money may look good but as you go out of the money you run into trouble.
+\end{enumerate}
+
+\subsubsection{Elasticity Inspired}\label{subsec:ElasticityParameterizations}
+The following elastic smile parameterizations attempt to define a function that is not only a smooth, close fit of the data, but also provides additional information to the trader about the general shape of the volatility smile.  Essentially we have attempted to build in `trading sense' into the function - i.e the volatilities that the parameterization produces are ones that are sensible from trader's point of view (no arbitrage violations...etc).
+\newpar
+When we talk about `trading sense', we are discussing how a non-mathematical observer sees and processes the data.  First, the volatility smile is visibly both continuous and smooth.  Second, a percentage change from the at-the-money strike to one higher should have the same percentage change as from the at-the-money strike to one lower.  Third, there is a notion of elasticity of volatility with respect to strike, as well as a feeling of a recursive relationship where the elasticity of volatility itself has some elastic behavior with respect to strike.
+\newpar
+The elastic smile parameterization applies to the volatility smile for a single a set of strikes for a chosen expiration and stock.  It incorporates only the notion of elasticity of volatility with respect to strike; that is, the percentage change in volatility relative to the percentage change in strike.  This elasticity is referred to as the `skewness', and is measured at the forward price, or the at-the-money portion of the volatility smile.  The elasticity of the skewness is referred to as the `curvature', and the elasticity of the curvature is referred to as the `twist'.  Mathematical derivations of the first and second order elastic smile parameterization schemes are provided in appendix \ref{appendix:ElasticSmileDerivation}.
+\newpar
+Let $\Sigma(k)$ be the function of volatility with respect to strike, $k$ be the strike price, $\sigma_f$ be the volatility at the forward price, and $n(k)$ be the percentage change from the forward price for a given strike $k$.  By definition, we have
+\begin{equation*}
+n(k) = 	\begin{cases}
+			n_L(k) = \frac{100\left(f-k\right)}{f} & : k < f\\
+            n_R(k) = \frac{100\left(k-f\right)}{f} & : k \geq f\\
+		\end{cases}.
+\end{equation*}
+To simplify our elasticity-based parameterizations, we will instead define $n(k)$ to be negative for strikes above the forward price, thus simplifying $n(k)$ to be
+
+\begin{equation*}
+	n(k) = 	\frac{100\left(f-k\right)}{f} \ \forall k.
+\end{equation*}
+
+The elastic smile parameterizations are then given by:
+
+\subsubsection*{First Order (Skew Only)}
+\begin{equation}
+	\Sigma(k) = \sigma_f\mathbb{S}^{n(k)} \label{FirstOrderSmile},
+\end{equation}
+where $\sigma_f$ (forward volatility) and $\mathbb{S}$ (Skew) are the only parameters.
+
+\subsubsection*{Second Order (Skew and Curvature)}
+\begin{equation}
+\Sigma(k) = \begin{cases}
+			\sigma_f\left(\mathbb{S}\right)^{n(k)}\left(\mathbb{C}_l\right)^{n^{2}(k)} & : k < f	\\
+            \sigma_f\left(\mathbb{S}\right)^{n(k)}\left(\mathbb{C}_r\right)^{n^{2}(k)} & : k \geq f	\\
+        \end{cases},
+\label{SecondOrderSmile}
+\end{equation}
+with $\sigma_f$, $\mathbb{S}$, $\mathbb{C}_l$ (Left Curvature), and $\mathbb{C}_r$ (Right Curvature) as parameters.
+
+\subsubsection*{Third Order (Skew, Curvature, and Twist)}
+\begin{equation}
+\Sigma(k) = \begin{cases}
+			\sigma_f\left(\mathbb{S}\right)^{n(k)}\left(\mathbb{C}_l\right)^{n^{2}(k)}\left(\mathbb{T}_l\right)^{n^{3}(k)} & : k < f	\\
+            \sigma_f\left(\mathbb{S}\right)^{n(k)}\left(\mathbb{C}_r\right)^{n^{2}(k)}\left(\mathbb{T}_r\right)^{n^{3}(k)} & : k \geq f	\\
+        \end{cases},
+\label{ThirdOrderSmile}
+\end{equation}
+with $\sigma_f$, $\mathbb{S}$, $\mathbb{C}_l$, and $\mathbb{C}_r$, $\mathbb{T}_l$ (Left Twist), and $\mathbb{T}_r$ (Right Twist) as parameters.
+
+\subsubsection{Natural Log Modification to the Elastic Smile Parameterizations}
+A keen mathematical mind may notice that the first, second, and third order elastic smile parameterizations may have poor numerical properties.  In particular, it is usually the case that $\mathbb{S} \approx 1$ and $n(k)$ to be quite large - on the order of 1000 or more in many cases.  For the $\mathbb{C}_l$ and $\mathbb{C}_r$ parameters, the poor numerical properties are even further exacerbated since we raise each to the power of $n^{2}(k)$ and it is usually the case that $1 < \mathbb{C}_l,\mathbb{C}_r < \mathbb{S}$.  The bad numerical properties are even more exacerbated with the twist parameters, since usually $1 < \mathbb{T}_l,\mathbb{T}_r < \mathbb{C}$ and are then raised to the $n^{3}(k)$ power.  On top of all that, we then multiply everything together with the goal of obtaining a volatility value that is usually somewhere between zero and one.
+\newpar
+One way to potentially improve the numerical properties of the elasticity inspired parameterizations is to instead analyze the natural log of the volatility smile, and then convert back to normal vol once the optimization is complete.  Making this change to the second order elastic smile gives:
+\begin{align*}
+\ln(\Sigma(k)) 
+&= 		\begin{cases}
+			\ln\left(\sigma_f\left(\mathbb{S}\right)^{n(k)}\left(\mathbb{C}_l\right)^{n^{2}(k)}\right) & : k < f	\\
+            \ln\left(\sigma_f\left(\mathbb{S}\right)^{n(k)}\left(\mathbb{C}_r\right)^{n^{2}(k)}\right) & : k \geq f	\\
+        \end{cases} \\
+&=		\begin{cases}
+			\ln(\sigma_f) + n(k)\ln(\mathbb{S}) + n^{2}(k)\ln(\mathbb{C}_l) & : k < f	\\	
+            \ln(\sigma_f) - n(k)\ln(\mathbb{S}) + n^{2}(k)\ln(\mathbb{C}_r) & : k \geq f	\\
+        \end{cases}, \numberthis
+\end{align*}
+\label{SecondOrderSmileNaturalLog}
+\newline
+which eliminates the troublesome numerical properties of equation \ref{SecondOrderSmile}.  A similar transformation can also be performed for the first and third order smile parameterizations.
+\subsubsection{Other Parameterization Methods}
+There are also a number of publicly available optimization styles and parameterizations available to model the volatility smile but are not included in the analysis here.  For the curious reader, a few notable ones are named below.
+\begin{enumerate}
+	\item A stochastic-volatility inspired parameterization provided by Jim Gatheral\textsuperscript{\cite{Gatheral}}:
+\begin{equation}
+\Sigma^{2}(k) = a + b\Big\{p(k-m) + \sqrt{(k-m)^{2}+ \sigma^{2}} \Big\},
+\end{equation}
+where $\Sigma(k)$ is the volatility as a function of strike $k$ (for a single expiration and underlying asset), and $\{a,b,p,m,\sigma\}$ are fitting parameters.
+	\item Roger Lee's moment formula for extreme strikes\textsuperscript{\cite{Lee}}.
+    \item Matthias R. Fengler's arbitrage free smoother\textsuperscript{\cite{Fengler}}, notably NOT a parameterized curve but instead a smoothing algorithm with constraints that force it to be arbitrage-free in terms of option trading.
+\end{enumerate}
+
+\subsection{Weighting Schemes}\label{sec:WeightingSchemes}
+From a trading standpoint, not all strikes are created equal.  Thus it is important to communicate to the optimization process what points are more important than others.  In general, strikes closer to the at-the-money strike tend to be more important to a trader than the out-of-the-money strikes.  For this project, the following weighting styles were examined:
+
+\begin{enumerate}
+	\item \textbf{Evenly Weighted} \newline This will result in the equivalent of an unweighted optimization process.  Each strike/vol pair in the dataset will be given equal weight.
+    \item \textbf{Raw Volatility Width} \newline This weights each (Strike,Volatility) point proportionally based on the point's market Bid/Ask Iv spread relative to the average market Bid/Ask Iv spread for the entire expiration dataset.
+    \item \textbf{Volatility Width Vega Multiplier} \newline This weights each (Strike, Volatility) point based off of the market Bid/Ask Iv spread along with a multiplier related to the corresponding Vega for each strike.  The value for each strike's vega is determined using the same pricing model as described in \ref{sec:ConvertingToVol}
+\end{enumerate}
+
+\subsection{Nonlinear Least Squares Optimization}
+Two types of least squares optimization are compared for the chosen parameterization schemes in section \ref{sec:VolSmileParameterizations}:  The Gauss-Newton and Levenberg-Marquardt algorithms.  Both C\# implementations of the algorithms are designed for ease in adding a new parameterization.  One can add a new parameterization by simply defining a few function calls that the algorithm will use, rather than rewriting an entire new copy of the chosen optimization algorithm specifically tailored to the new parameterization scheme\footnote{Note that this algorithmic design pattern only applies to dense datasets such as the option volatility smile, and does not take advantage of any sparsity arguments that can often be made when solving other problems in optimization.}.  Additionally, both the Gauss-Newton and Levenberg-Marquardt algorithms were arbitrarily chosen to stop when the difference between the sum of least squares from the previous step and the current step were less than $10^{-14}$ in magnitude.
+\newpar
+The freely available Math.Net Numerics library\footnote{https://numerics.mathdotnet.com/} for C\# was utilized for necessary linear algebra computations.  This allowed focus to remain on the raw process of the optimization algorithm and avoided the recreation of already established and well-known algorithms in linear algebra.
+\subsubsection{The Least Squares Problem, in General}
+The retrieved option data, once processed (section \ref{sec:CollectionOfData}), provides a set of $N$ strike-volatility pairs $\{(k_i,\sigma_i) \ ; \ i = 1,2,\cdots,N\}$.  We then pick a function $f(k,\lambdaVect)$ to model the $N$ data points.  Here, $\lambdaVect = [\lambda_1, \lambda_2, \cdots, \lambda_M]^T$ is a $1 \times M$ vector of parameters $(M < N)$ for the function $f(k,\lambdaVect)$.  Then the error at the $i^{th}$ strike $k_i$ is $r_i = \sigma_i - f(k_i, \lambdaVect)$, where $\sigma_i$ is the input volatility at $i^{th}$ strike.
+\newpar
+The goal of any least-squares optimization process is then to find the $M$ parameter values of $\lambdaVect$ that minimize the sum of squared errors.  In other words, we want to find $\lambdaVect$ so that the function
+\begin{equation}
+	F(\lambdaVect) = \sum_{i=1}^{N}(\sigma_i - f(k_i,\lambdaVect))^2 = \sum_{i=1}^{N}r_i^2
+    \label{eq:LeastSquaresF}
+\end{equation}
+is minimized.
+\newpar
+Additionally, a weighting factor is assigned for each data point.  Let the weighting factor for the $i^{th}$ data point be denoted as $w_i$.  Then equation \ref{eq:LeastSquaresF} becomes
+\begin{equation}
+	F(\lambdaVect) = \sum_{i=1}^{N}(\sigma_i - f(k_i,\lambdaVect))^2 w_i = \sum_{i=1}^{N}r_i^2 w_i.
+    \label{eq:LeastSquaresFWeighted}
+\end{equation}
+In the case of a linear $f(k,\lambdaVect) = ak + b$ parameterization and even weighting scheme, for example, we will have $\lambdaVect = (a, b)^T$ and $w_i = 1 \enskip \forall \enskip i = 1, \cdots, N$.
+\newpar
+For the following sections \ref{subsubsec:GaussNewton} and \ref{subsubsec:LevenbergMarquardt}, we define the following:
+
+\begin{itemize}
+\item $s$ as current step number in the iteration 
+\item $J$ as the $N \times M$ Jacobian matrix of the of the function $f(k,\lambdaVect)$.  That is, 
+\begin{equation*}
+	J_{ij} = \frac{\partial f(k_i,\lambdaVect)}{\partial \lambda_j}, \quad i = 1,\cdots, N \quad \text{and} \quad j = 1,\cdots, M.
+\end{equation*}
+\item $\lambdaVect_s$ as the approximate solution vector at step $s$
+\item $\pmb{\sigma} = \begin{bmatrix} \sigma_1 \\ \vdots \\ \sigma_N \end{bmatrix}$
+\item $\pmb{f}(\lambdaVect) = \begin{bmatrix} f(k_1,\lambdaVect) \\ \vdots \\ f(k_N,\lambdaVect) \end{bmatrix}$
+\end{itemize}
+
+\subsubsection{The Gauss-Newton Algorithm}\label{subsubsec:GaussNewton}
+The Gauss-Newton optimization algorithm is widely known.  The pseudocode for the C\# implementation of the Gauss-Newton algorithm is as follows:
+
+\begin{enumerate}
+	\item Set $s = 0$ and $\lambdaVect_s = \lambdaVect_0$
+    \item while $s < maxSteps$
+      \begin{enumerate}
+          \item $\pmb{d} = \pmb{\sigma} - \pmb{f}(k,\lambdaVect_{s})$
+          \item Calculate $J$ from $\pmb{f}(k,\lambdaVect_{s})$
+          \item $\lambdaVect_{s+1} = \lambdaVect_{s} + J^{-1}\pmb{d}$, where $J^{-1}$ is the Moore-Penrose pseudoinverse.
+          \item $stop = |F(\lambdaVect_{s}) - F(\lambdaVect_{s+1})| \leq 10^{-14}$
+          \item $\lambdaVect_{s} = \lambdaVect_{s+1}$
+          \item $s = s + 1$
+          \item If $stop$, break out of the loop and go to step \ref{GN_CalcR2}.
+      \end{enumerate}
+    \item Calculate $R^2$.\label{GN_CalcR2}
+\end{enumerate}
+
+\subsubsection{The Levenberg-Marquardt Algorithm}\label{subsubsec:LevenbergMarquardt}
+The Levenberg-Marquardt algorithm in this project was adapted directly from Levenberg\textsuperscript{\cite{Levenberg}}.  Pseudocode for the C\# implementation is as follows:
+
+\begin{enumerate}
+	\item $\kappa = 0.01$, $\rho = 2.0$, $\lambdaVect_s = \lambdaVect_0$
+	\item while $s < maxSteps$
+    	\begin{enumerate}
+        	\item $\pmb{d} = \pmb{\sigma} - \pmb{f}(k, \pmb{\lambda}_{s})$
+            \item Calculate $J$ from $\pmb{f}(k, \pmb{\lambda}_{s})$
+            \item $\kappa = \frac{\kappa}{\rho}$
+            \item Solve $\left(J^{T}J + \kappa diag(J^{T}J)\right) \pmb{\eta} = J^{T} \pmb{d}$
+            \item $\lambdaVect_{s+1} = \pmb{\lambda}_{s} + \pmb{\eta}$
+            \item while $F(\lambdaVect_{s+1}) > F(\pmb{\lambda}_{s})$
+                    \begin{enumerate}
+                        \item $\kappa = \rho \kappa$              
+                        \item Solve $\left(J^{T}J + (\kappa) diag(J^{T}J)\right) \pmb{\eta}= J^{T} \pmb{d}$
+                        \item $\lambdaVect_{s+1} = \pmb{\lambda}_{s} + \pmb{\eta}$
+                    \end{enumerate}
+            \item $stop = |F(\lambdaVect_{s}) - F(\lambdaVect_{s+1})| \leq 10^{-14}$
+            \item $\pmb{\lambda}_{s} = \lambdaVect_{s+1}$
+            \item $s = s + 1$
+            \item If $stop$, break out of the loop and go to step \ref{LM_CalcR2}
+    	\end{enumerate}
+   \item Calculate $R^2$. \label{LM_CalcR2}
+\end{enumerate}
+Note that there is often much discussion surrounding the parameter $\rho$.  Choosing this parameter can be difficult, and some problems even involve updating it at each iteration.  For this project, fixing $\rho = 2.0$ seemed to work out fine for all situations.
+
+\subsection{Trading Simulations}\label{sec:TradingStrategies}
+The end goal of this project is to show that the best parameterization of a volatility smile from a mathematical standpoint is not necessarily the best from a trading standpoint.  In addition to well-defined parameterizations, we require a handful of trading simulations that reasonably represent reality.  A trading simulation in this project consists of four pieces: the actual trading strategy, a scope on what it is allowed to trade, imposed limits to simulate risk exposure, and a timeframe for which to execute the simulations.
+
+\subsubsection{Strategies And Scope}
+\label{subsec:TradingStrategiesAndScope}
+A handful of simple trading strategies are included in the analysis program, each based on the concept of trading edge.  In this project, trading edge is defined as the dollar difference between an option's theoretical value and the corresponding bid or ask market price.  For example, suppose we find an option that has a market bid price of \$0.85 and ask price of \$1.10.  If we evaluate the option's theoretical value to be \$1.00, then we say the theoretical value has 15 cents of edge with respect to the bid price and 10 cents of edge with respect to the ask price.  If the theoretical value fell below the market bid price or above the market ask price, it is said to have `crossed' the market and thus will have a negative edge.
+\newpar
+It is possible to encounter situations where there isn't as much trading size as one would like to trade.  For example, if only four contracts are available for a particular side of the market, then clearly one cannot trade more than four on that line.  Some real-world trading strategies may also take into account the size available when determining whether or not to make a trade.  This type of analysis - trading based on available market size - is left out of this project.  In an effort to keep things simple, all trading algorithms utilized in this project will trade only a single option contract at a time.  In other words, a goal trading size of one.
+\newpar
+The following trading strategies are included in the analysis program:
+
+\begin{enumerate}
+	\item \textbf{Market Cross Single Option} \newline
+        The simplest possible trading algorithm.  Only trade when your theoretical value crosses the market - i.e whenever there is negative edge.  In practice, this can be quite risky and often foolish.  If one assumes the market prices are arbitrage free, then if a theoretical value for an option crosses the market, it is quite likely that something has gone wrong during the process of finding that theoretical value.
+	\item \textbf{Small Edge Single Option} \newline
+    	This trading strategy will only attempt to execute a trade when the edge between the theoretical value and the bid or ask market price is at most ten percent of the market bid/ask spread.  For example, if the bid price of an option is \$1.00, the ask price is \$2.10, and the theoretical value is \$1.99, then the algorithm will attempt to sell the option.  If the theoretical value was instead \$1.89, then no trade will be attempted, since at least 10\% of \$1.10 $=$ 11 cents of edge is required to trade.  This algorithm will not trade if the theoretical value crosses the market.
+	\item \textbf{Large Edge Single Option} \newline
+    	Similar to the small edge trading strategy, this one will only execute a trade when the edge between the theoretical value and the bid or ask market price is at most 25\% of the market bid/ask spread.  This algorithm will not trade if the theoretical value crosses the market.
+    \item \textbf{Small Straddle Edge} \newline
+        This strategy will only trade a straddle if both the call and put options for a strike have bid prices OR ask prices that are within 10\% of their respective theoretical values.  A straddle is a strategy where one buys or sells both the call and the put for a single strike.  This strategy will require enough size on both the call and the put for a given strike.
+    \item \textbf{Large Straddle Edge} \newline
+        Similar to the small straddle edge strategy, this one will only trade straddles where both the call and put for a given strike are within 50\% of their respective theoretical values.
+    \item \textbf{Zero Butterfly Edge} \newline
+        This strategy attempts to find arbitrage opportunities for a butterfly position.  A butterfly is a position where one buys/sells an option at a lower exercise price, sells/buys two options at a middle exercise price, buys/sells an option at a higher exercise price.  The traded options must be of a single type - either calls or puts.  To keep things simple, this strategy will only look at butterflies where the strike differential is equal, and only strikes that are in direct succession of each other.  It will only buy a butterfly where the cost to put on the butterfly position is less than the theoretical value, and will only sell the butterfly when the cost to put on the position is greater than the theoretical value.
+    \item \textbf{Small Butterfly Edge}
+        A strategy that will trade butterflies that are within 10\% of the theoretical value.  Similar to the zero edge butterfly, it will only look for butterflies that can be made from successive strikes.
+    \item \textbf{Large Butterfly Edge}
+        Similar to the small edge butterfly, this strategy will trade butterflies that are within 50\% of the theoretical value.
+\end{enumerate}
+Finally, we limit each trading simulation to only make trades within a single expiration for a single underlying asset.  More complex trading strategies exist such as time spreads or spreads between stocks.  Such trading strategies go beyond the scope of this project.
+
+\subsubsection{Risk Exposure And Time Frame}
+\label{subsec:RiskExposureAndTimeFrame}
+Without imposing limits on how much a trading simulation is allowed to trade, it is quite possible that the simulation establishes an unrealistic position that is far beyond any normal risk tolerance.  To provide limits for this project, a notion of `delta exposure' was introduced to each trading simulation.  In the trading world, the option's delta can provide a rough guideline for the number of underlying shares that need to be traded (`hedged'') to offset the option's purchase or sale.  Here, it is used to approximately gauge the number of underlying shares a particular trading simulation is long or short.  If the simulation desires to make a trade it must first check to see if the trade would create a new position delta that, when added to the current delta exposure, would be beyond the allowed limits.  To keep things as simple as possible, all analyzed trading simulations adhered to an upper delta exposure limit of 1,000 and a lower delta exposure limit of -1,000.  In other words, the trading simulations must not have a position that is long or short more than approximately 1,000 shares of the corresponding stock.
+\newpar
+Finally, trading simulations were performed through varying time periods over the course of a single trading day.  If one has a desire to analyze different time frames, the C\# analysis program allows this to be easily done.
+
+\subsection{The C\# program}
+The data is analyzed with the help of a custom-written C\# program that reads saved data files from a particular folder and allows the user to run simulations on any combination of stock, expiration, fit parameterization, weighting scheme, and trading style they wish for the given dataset.  Results from the simulations are compiled as individual excel sheets for further analysis.  To run simulations on a custom data file, one simply has to gather data from his or her preferred data source and save it into the `Data Files' folder in JSON format that can be deserialized into the \code{DataSet} object type.  Due to proprietary restrictions, implementation details of the pricing model\footnote{Although the implementation details of the pricing model are proprietary, it is a variant of the trinomial-lattice based option pricing model.  For more details on option pricing models in general, see section \ref{sec:PricingModels} on page \pageref{sec:PricingModels}.} used in this project is not included in the source code, thus requiring the user to additionaly provide a pricing model to run the program.
+\newpar
+The reason for designing the simulation program in this way, besides the bonus of easy customization for others, is to attempt to organize the multitude of available data.  Suppose we want to run a simulation for just a single expiration date for a single stock four different parameterization schemes, two different optimization strategies, five different trading strategies, and four different trading intervals.  This means that for each data snapshot at each trading interval there are $4 \times 2 \times 5 = 40$ combinations of expiration, parameterization, and trading scheme to analyze per trading interval, creating set of $4 \times 40 = 160$ different simulation results.
+\newpar
+The program performs the following steps on the data provided to it:
+\begin{enumerate}
+	\item For a given stock and expiration, group the data into unique combinations of optimization algorithm, weighting scheme, and trading style.\label{item:GroupData}
+    \item For every data set matching the underlying and expiration date chosen in step \ref{item:GroupData}, process the market data by
+    \begin{enumerate}
+    	 \item Convert each option's bid and ask price into volatilities (section \ref{sec:ConvertingToVol}).
+         \item Filter the data into a single set of $(strike, volatility)$ data points (section \ref{sec:FilteringMethods}).
+         \item Order this single set of volatility data by strike from least to greatest.
+         \item Trim data from the ends of the data domain (section \ref{sec:FilteringMethods}).\label{item:FilterConvertTrim}
+    \end{enumerate}
+	\item Group and order the data in step \ref{item:FilterConvertTrim} by date collected.  Run a nonlinear least-squares optimization process for the chosen parameterization and weighting schemes.  Record the current option position and simulate trades based upon a chosen trading strategy.
+   \item Create an excel document with results and statistics.
+\end{enumerate}
+
+The above results in the analysis of unique combinations of: underlying asset, expiration date, parameterization function, weighting scheme, and trading strategy.  Since there is far too much data to analyze here, only some examples of particular results are presented.
+
+\subsection{Summary of Project Scope}
+The end project scope was downsized in an effort to simplify the analysis of the simulations. The scope included all combinations of the following:
+
+\begin{enumerate}
+    \item American option market data collected on one-minute intervals on Monday, February 12\textsuperscript{th} 2018
+    \begin{enumerate}
+        \item NVDA Expirations:  3/16/18, 6/15/18, 1/18,19
+        \item TSLA Expirations:  3/16/18, 4/20/18, 1/18/19
+    \end{enumerate}
+    \item Volatility smile parameterizations
+    \begin{enumerate}
+        \item Basic (section \ref{subsec:BasicParameterizations}):  Raw, Linear, Quadratic
+        \item Elastic (section \ref{subsec:ElasticityParameterizations}): Elastic, Smile, Twist
+    \end{enumerate}
+    \item Nonlinear least squares optimization algorithms
+    \begin{enumerate}
+        \item Gauss-Newton (section \ref{subsubsec:GaussNewton})
+        \item Levenberg-Marquardt (section \ref{subsubsec:LevenbergMarquardt})
+    \end{enumerate}
+    \item Nonlinear optimization weighting schemes (section \ref{sec:WeightingSchemes}): Evenly, VolWidth, VolWidthVegaMult
+    \item Trading strategies (section \ref{sec:TradingStrategies}):  MarketCrossSingleOption, SmallEdgeSingleOption, LargeEdgeSingleOption
+    \item Trading intervals:  1, 2, 5, and 10 minutes.
+\end{enumerate}
+Note that despite reducing the amount of data to analyze, the above results in 2592 separate simulations.  This number can further be reduced through the realization that simulations run using the Raw parameterization do not execute any optimization process, and thus many of the simulations will yeild the same results, regardless of choice in optimization algorithm or weighting scheme.
+
+\subsection{A Visual Example}
+For the more visually inclined, let's consider options for TSLA that shared the same expiration date of March 16\textsuperscript{th}, 2018.  At about 11:45 AM CDT on February 12\textsuperscript{th}, 2018, the market prices are displayed in Figure \ref{fig:SampleOptMarketPrices}.  Since it is difficult to see the separation between the bid and ask prices on a plot, Table \ref{table:SampleOptionMarketDetail} shows the actual values around where the call and put prices cross. 
+
+\begin{figure}[H]
+	\caption{TSLA 3/16/18 Midday Option Prices}
+	\centerline{\includegraphics[width=1\textwidth]{SampleOptionMarket}}
+	\label{fig:SampleOptMarketPrices}
+\end{figure}
+
+\begin{center}
+  \captionof{table}{TSLA 3/16/18 Midday Option Price Detail}
+  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+      \hline
+      \rowcolor{LightCyan}
+      \textbf{Strike} & \textbf{Call Bid} & \textbf{Call Ask} & \textbf{Put Bid} & \textbf{Put Ask} \\
+      \hline
+        300 &   \$22.40   &   \$23.00   &   \$11.05   &   \$11.35   \\  \hline
+        305 &   \$19.30   &   \$19.80   &   \$12.95   &   \$13.25   \\  \hline
+        310 &   \$16.64   &   \$17.05   &   \$15.15   &   \$15.45   \\  \hline
+        315 &   \$14.15   &   \$14.45   &   \$17.60   &   \$17.95   \\  \hline
+        320 &   \$12.00   &   \$12.15   &   \$20.25   &   \$20.70   \\  \hline
+        325 &   \$10.05   &   \$10.15   &   \$23.25   &   \$23.60   \\  
+      \hline
+  \end{tabular}
+  \label{table:SampleOptionMarketDetail}
+\end{center}
+
+Once the market data snapshot is obtained, each of the market prices are then put through the trinomial-lattice based pricing model to arrive at the volatilities in Figure \ref{fig:SampleOptionMarketIVs}.
+
+\begin{figure}[H]
+	\caption{TSLA 3/16/18 Midday Market Volatilities}
+	\centerline{\includegraphics[width=1\textwidth]{SampleOptionMarketIVs}}
+	\label{fig:SampleOptionMarketIVs}
+\end{figure}
+
+Note now that many points are now missing from the data, especially at the ends of the strike range.  The reason for this is embedded in the chosen option pricing model.  For the model used in this project, options with extremely low or zero price or options below parity can result in a zero-volatility output.  Recall that an option's value is typically made up of two components:  Intrinsic and Extrinsic value.  The former results from how the option contract is defined and it's strike price relative to the sock price.  The latter consists of other factors, of which the volatility can attribute to.  If for some reason the extrinsic value is zero as in the case of the below parity options, then there is essentially no volatility, and is thus missing from the plot in Figure \ref{fig:SampleOptionMarketIVs}.
+\newpar
+Converting the market prices into volatilities gives four sets of data for each strike:  Call Bid, Call Ask, Put Bid, and Put Ask implied volatility.  To be able to run a simple nonlinear least squares optimization process, the four data sets need to be condensed into a single set of data points.  The process by which this was accomplished is described in section \ref{sec:FilteringMethods}.  The result of which are shown in Figure \ref{fig:SampleInputIvs}.
+
+\begin{figure}[H]
+	\caption{TSLA 3/16/18 Midday Input IVs}
+	\centerline{\includegraphics[width=1\textwidth]{SampleInputIvs}}
+	\label{fig:SampleInputIvs}
+\end{figure}
+
+Plotted with the market implied volatilities shown in Figure \ref{fig:SampleOptionMarketIVs} gives the result in Figure \ref{fig:SampleInputIvsWithMarketIvs}.
+
+\begin{figure}[H]
+	\caption{TSLA 3/16/18 Midday Input IVs with Market IVs}
+	\centerline{\includegraphics[width=1\textwidth]{SampleInputAndMktIVs}}
+	\label{fig:SampleInputIvsWithMarketIvs}
+\end{figure}
+
+Next, we pick a parameterization, optimization algorithm, and weighting scheme.  For the Levenberg-Marquardt algorithm and even weighting scheme, the optimized volatilities for each parameterization is shown in Figures \ref{fig:SampleLinElastQuadOptimizations} and \ref{fig:SampleSmileTwistOptimizations}.  In some cases the optimized volatility can nearly or exactly match the input volatility, thus making it difficult to see the differences in a plot.  Table \ref{table:SampleLinElastQuadSmileTwistVolDetail} shows the actual volatility values around where the market prices cross.
+
+\begin{figure}[H]
+	\caption{TSLA 3/16/18 Linear, Elastic, and Quadratic Optimizations}
+	\centerline{\includegraphics[width=1\textwidth]{SampleLinElastQuadOptimizations}}
+	\label{fig:SampleLinElastQuadOptimizations}
+\end{figure}
+
+\begin{figure}[H]
+	\caption{TSLA 3/16/18 Smile and Twist Optimizations}
+	\centerline{\includegraphics[width=1\textwidth]{SampleSmileTwistOptimizations}}
+	\label{fig:SampleSmileTwistOptimizations}
+\end{figure}
+
+\begin{center}
+  \captionof{table}{TSLA 3/16/18 Optimized Volatility Detail, Multiplied by 100}
+  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c|c|c| }
+      \hline
+      \rowcolor{LightCyan}
+      \textbf{Strike} & \textbf{Input} & \textbf{Linear} & \textbf{Elastic} & \textbf{Quad} & \textbf{Smile} & \textbf{Twist}\\
+      \hline
+        300 & 19.76 & 21.25 & 20.84 & 19.73 & 19.79 & 19.75 \\ \hline
+        305 & 19.41 & 20.87 & 20.45 & 19.38 & 19.47 & 19.43 \\ \hline
+        310 & 19.14 & 20.49 & 20.06 & 19.05 & 19.17 & 19.14 \\ \hline
+        315 & 18.88 & 20.10 & 19.68 & 18.76 & 18.90 & 18.88 \\ \hline
+        320 & 18.70 & 19.72 & 19.31 & 18.50 & 18.66 & 18.65 \\ \hline
+        325 & [N/A] & 19.34 & 18.95 & 18.27 & 18.44 & 18.44 \\ 
+      \hline
+  \end{tabular}
+  \label{table:SampleLinElastQuadSmileTwistVolDetail}
+\end{center}
+
+Note that since all the parameterizations are closed form, we are able to obtain a volatility for strikes that were not provided to the optimization process.  Despite this fact, all strikes that are missing input data are ignored during the trading analysis.  The practical reasoning for this is simple:  If there wasn't enough confidence to provide our optimization process with a given point (in this case, strike 325), then we don't want to make any trading decisions on this point, and thus it is ignored.
+\newpar
+Once the optimized volatilites are obtained, they are converted back to theoretical values as in the following figure.  
+
+\begin{figure}[H]
+	\caption{TSLA 3/16/18 Twist-Optimized Theoretical Values}
+	\centerline{\includegraphics[width=1\textwidth]{SampleTwistOptimizedTheos}}
+	\label{fig:SampleTheoreticalValues}
+\end{figure}
+
+Detail near the crossing point and next to the market prices is shown in the following table.
+
+\begin{center}
+  \captionof{table}{TSLA 3/16/18 Midday Theoretical and Option Price Detail}
+  \begin{tabular}{ |>{\columncolor{Gray}}c|c|>{\columncolor{LightGreen}}c|c|c|>{\columncolor{LightGreen}}c|c| }
+      \hline
+      \rowcolor{LightCyan}
+      \textbf{Strike} & \textbf{Call Bid} & \textbf{Call Theo} & \textbf{Call Ask} & \textbf{Put Bid} & \textbf{Put Theo} & \textbf{Put Ask} \\
+      \hline
+        300 & \$22.40 & \$22.69 & \$23.00 & \$11.05 & \$11.19 & \$11.35   \\  \hline
+        305 & \$19.30 & \$19.63 & \$19.80 & \$12.95 & \$13.12 & \$13.25   \\  \hline
+        310 & \$16.64 & \$16.83 & \$17.05 & \$15.15 & \$15.30 & \$15.45   \\  \hline
+        315 & \$14.15 & \$14.30 & \$14.45 & \$17.60 & \$17.74 & \$17.95   \\  \hline
+        320 & \$12.00 & \$12.03 & \$12.15 & \$20.25 & \$20.45 & \$20.70   \\  \hline
+        325 & \$10.05 & [N/A]   & \$10.15 & \$23.25 & [N/A]   & \$23.60   \\  
+      \hline
+  \end{tabular}
+  \label{table:SampleTheoreticalDetail}
+\end{center}
+
+Note that the theoretical value for the 325 strike in Table \ref{table:SampleTheoreticalDetail} is marked as `[N/A]'.  This is not because a theoretical value could be calculated.  The `[N/A]' exists because the market data filtering process (Section \ref{subsec:MarketDataProcessing}) did not provide an input point to the optimization process.  Since all the functions here are closed form, a volatility could in fact be calculated, and thus a theoretical value.  Recall however that the decision was made to not make trading decisions on points where there wasn't enough confidence to provide an input volatility.
+\newpar
+The entire market data to theoretical value process is repeated many times throughout the trading day.  Once all the samples are collected, a trading simulation (Section \ref{sec:TradingStrategies}) is executed on each optimization snapshot in the order they were created.  The trading simulation will decide whether or not to trade at each point based on the theoretical value compared to the market prices and the chosen trading strategy and restrictions.
+\newpar
+It should be clear from the previous plots that some parameterizations are very poor models for the option volatility smile.  The practical implications of a poor model choice are addressed in the following sections.
+
+\newpage
+\section{Results} \label{sec:Results}
+Even after trimming the total possible scope down significantly, there are still many moving parts in this project\footnote{Removed parts include, but are not limited to:  hedging, near earnings move analysis, exchange and trading fees, other option pricing models, other closed-form and non closed-form volatility smile models, market data speed (maybe we are too slow to get on a trade or off a trade that we want), other trading strategies that involve market-making or inter-expiration trading, profit and loss beyond a single trading day, alternate stocks that have dividends, significantly positive or negative interest rates}.  Each moving part is individually isolated and analyzed to illustrate the mathematical and practical implications that arise for a given choice made at each step in the entire process.  All results presented here are those arbitrarily taken from experiments conducted on a single trading day:  February 12\textsuperscript{th}, 2018.
+\newpar
+Unless otherwise specified, any results presented here are those from simulations conducted with the Gauss-Newton algorithm (\ref{subsubsec:LevenbergMarquardt}), vol width vega multiplier weighting (\ref{sec:WeightingSchemes}), the tiny percent edge trader (\ref{subsec:TradingStrategiesAndScope}), one minute trading intervals, and risk bounds between -1000 and 1000 deltas (\ref{subsec:RiskExposureAndTimeFrame}).
+\newpar
+Section \ref{subsec:ResultsChoiceOfFunc} shows the mathematical and practical implications of parameterization choice, \ref{subsec:ResultsChoiceOfWeight} illustrates the affects of a choice in weighting scheme, \ref{subsec:ResultsChoiceOfOptAlgo} presents observed differences when using the Gauss-Newton or Levenberg-Marquardt optimization algorithms, and finally \ref{subsec:ResultsChoiceOfTradingStrategy} shows the performance of different trading strategies.  All assessments are done over three data sets taken on February 12\textsuperscript{th}, 2018:  TSLA options expiring on 3/16/18 and 1/18/19, and NVDA options expiring on 1/18/19.
+\newpar
+When comparing chosen model functions from a mathematical standpoint, the coefficient of determination ($R^2$) was used heavily to compare the `goodness of fit' between parameterization choices.  The reasoning here was driven by the need to find a standardized measure of optimization that could then be cross-compared against the resulting profit and loss from the trading simulations.  In other words, we wanted to see if better $R^2$ measures (those closest to 1) provided more positive portfolios.
+\newpar
+The concepts of `realized' and `unrealized' positions were utilized to assess the performance of a trading simulation over the course of the trading day.  The realized position is simply the current cash position caused by buying or selling options.  The unrealized position represents the amount it would cost to liquidate all open positions based on a snapshot of market prices.  The unrealized and realized position were recalculated for each trading interval, after the trading simulation ran and.  The sum of these two types of positions provided the end performance measure - it represents the amount of cash one would walk away with should the decision be made to liquidate all open positions immediately while also taking into account the amount of capital put forward to arrive at such an option position.
+
+\subsection{Choice of Function Definition}\label{subsec:ResultsChoiceOfFunc}
+The choice in parameterization had the clearest affect on the trading simulation profit or loss.  It should not be surprising that a bad choice in function model can result in even worse theoretical values, but a more quantitative result is presented here.  In fact, the profit or loss differences were so stark in some cases that it was impossible to gain any useful information when they were all plotted together on a single plot.  Thus, figures \ref{fig:TSLA_Mar_LinQuadElast}, \ref{fig:TSLA_Jan_LinQuadElast}, and \ref{fig:NVDA_Jan_LinQuadElast} show the profit and loss results for trading simulations running off of the linear, quadratic and elastic parameterizations, while figures \ref{fig:TSLA_Mar_SmileTwist}, \ref{fig:TSLA_Jan_SmileTwist} show the results of those running off of quadratic, smile, and twist parameterizations.  Further detail is presented in Table \ref{table:ResultProfitDetailByFuncChoice}.  All optimizations were performed with the vol-width-vega-multiplier weighting style and all trading simulations were done with the Tiny \%-Edge trader.
+
+\img{P\&L for TSLA 3/16/18 Linear, Quadratic, Elastic Parameterizations}{TSLA_Mar_LinQuadElast}{fig:TSLA_Mar_LinQuadElast}
+
+\img{P\&L for TSLA 3/16/18 Smile, Twist Parameterizations}{TSLA_Mar_SmileTwist}{fig:TSLA_Mar_SmileTwist}
+
+\img{P\&L for TSLA 1/18/19 Linear, Quadratic, Elastic Parameterizations}{TSLA_Jan_LinQuadElast}{fig:TSLA_Jan_LinQuadElast}
+
+\img{P\&L for TSLA 1/18/19 Smile, Twist Parameterizations}{TSLA_Jan_SmileTwist}{fig:TSLA_Jan_SmileTwist}
+
+\img{P\&\L for NVDA Linear, Quadratic, Elastic Parameterizations}{NVDA_Jan_LinQuadElast}{fig:NVDA_Jan_LinQuadElast}
+
+\begin{figure}[H]
+	\caption{Profit \& Loss for Quadratic, Smile, and Twist Parameterizations}
+	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceGoodModels}}
+	\label{fig:ResultFuncGainsOrMinorLoss}
+\end{figure}
+
+\begin{center}
+  \captionof{table}{Profit Detail by Parameterization Choice}
+  \label{table:ResultProfitDetailByFuncChoice}
+  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+      \hline
+      \rowcolor{LightGreen}
+      \textbf{Function} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Avg At Close} \\
+      \hline
+      Raw 		& \$1,122 	& -\$3,280 	& 3 	& -\$573.33	\\ \hline
+      Linear 	& \$725     & -\$13,210 & 47	& -\$245.21	\\ \hline
+      Elastic 	& \$4,710 	& -\$12,730 & 46 	& -\$178.26	\\ \hline
+      Quadratic & \$16,303 	& -\$24,061	& 151 	& -\$57.68	\\ \hline
+      Smile 	& \$5,300 	& -\$3,700 	& 8  	&  \$134.38	\\ \hline
+      Twist 	& \$8,292 	& -\$14,390	& 14	&  \$229.50	\\
+      \hline
+  \end{tabular}
+\end{center}
+
+Figures \ref{fig:ResultChoiceInFuncLinearR2Hist}, \ref{fig:ResultChoiceInFuncElasticR2Hist}, \ref{fig:ResultChoiceInFuncQuadraticR2Hist},
+\ref{fig:ResultChoiceInFuncSmileR2Hist}, \ref{fig:ResultChoiceInFuncTwistR2Hist} show the distribution of unweighted $R^2$ values for each parameterization choice over all optimizations throughout the simulation day.  For cross-comparison, a box plots are provided in Figure \ref{fig:ResultChoiceInFuncR2Dist}
+
+\begin{figure}[H]
+	\caption{R\textsuperscript{2} Distribution From Linear Parameterization}
+	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceLinearR2Hist}}
+	\label{fig:ResultChoiceInFuncLinearR2Hist}
+\end{figure}
+
+\begin{figure}[H]
+	\caption{R\textsuperscript{2} Distribution From Elastic Parameterization}
+	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceElasticR2Hist}}
+	\label{fig:ResultChoiceInFuncElasticR2Hist}
+\end{figure}
+
+\begin{figure}[H]
+	\caption{R\textsuperscript{2} Distribution From Quadratic Parameterization}
+	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceQuadraticR2Hist}}
+	\label{fig:ResultChoiceInFuncQuadraticR2Hist}
+\end{figure}
+
+\begin{figure}[H]
+	\caption{R\textsuperscript{2} Distribution From Smile Parameterization}
+	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceSmileR2Hist}}
+	\label{fig:ResultChoiceInFuncSmileR2Hist}
+\end{figure}
+
+\begin{figure}[H]
+	\caption{R\textsuperscript{2} Distribution From Twist Parameterization}
+	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceTwistR2Hist}}
+	\label{fig:ResultChoiceInFuncTwistR2Hist}
+\end{figure}
+
+\begin{figure}[H]
+	\caption{R\textsuperscript{2} Distribution by Parameterization Choice}
+	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceR2Box}}
+	\label{fig:ResultChoiceInFuncR2Dist}
+\end{figure}
+
+\subsection{Choice of Weighting Scheme}
+\label{subsec:ResultsChoiceOfWeight}
+
+\begin{figure}[H]
+	\caption{Profit \& Loss for Twist with Even, VW, and VWVM weighting schemes}
+	\centerline{\fbox{\includegraphics[width=1\textwidth]{ChoiceInWeightPnL}}}
+	\label{fig:ChoiceInWeightPnL}
+\end{figure}
+
+\begin{center}
+  \captionof{table}{Profit Detail by Weighting Choice}
+  \label{table:ResultProfitDetailByWeightingChoice}
+  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+      \hline
+      \rowcolor{LightGreen}
+      \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\
+      \hline
+      Even  & \$3,283 	& -\$9,464 	& 11 	& -\$14.00	\\ \hline
+      VW 	& \$8,740   & -\$14,390 & 13	& \$279.92	\\ \hline
+      VWVM  & \$8,292 	& -\$14,390	& 14 	& \$229.5	\\ \hline
+  \end{tabular}
+\end{center}
+
+\begin{center}
+  \captionof{table}{Unweighted R\textsuperscript{2} Detail by Weighting Choice}
+  \label{table:UnweightedR2DetailByWeightingChoice}
+  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c| }
+      \hline
+      \rowcolor{LightGreen}
+      \textbf{Weighting} & \textbf{Min} & \textbf{Max} & \textbf{Average} \\
+      \hline
+      Even  & 0.9997766 & 0.9999738 & 0.9999171 \\ \hline
+      VW 	& 0.9997720 & 0.9999738 & 0.9999166	\\ \hline
+      VWVM  & 0.9997720 & 0.9999737	& 0.9999155 \\ \hline
+  \end{tabular}
+\end{center}
+
+\begin{center}
+  \captionof{table}{Weighted R\textsuperscript{2} Detail by Weighting Choice}
+  \label{table:WeightedR2DetailByWeightingChoice}
+  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c| }
+      \hline
+      \rowcolor{LightGreen}
+      \textbf{Weighting} & \textbf{Min} & \textbf{Max} & \textbf{Average} \\
+      \hline
+      Even  & 0.9997766 & 0.9999738 & 0.9999171 \\ \hline
+      VW 	& 0.9995797 & 0.9999731 & 0.9999108	\\ \hline
+      VWVM  & 0.9994544 & 0.9999649	& 0.9998818 \\ \hline
+  \end{tabular}
+\end{center}
+
+\begin{center}
+  \captionof{table}{Weighted Average R\textsuperscript{2} Detail by Weighting Choice}
+  \label{table:WeightedAvgR2DetailByWeightingChoice}
+  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c| }
+      \hline
+      \rowcolor{LightGreen}
+      \textbf{Weighting} & \textbf{Min} & \textbf{Max} & \textbf{Average} \\
+      \hline
+      Even  & 0.9997766 & 0.9999738 & 0.9999171 \\ \hline
+      VW 	& 0.9994991 & 0.9999729 & 0.9999084	\\ \hline
+      VWVM  & 0.9989745 & 0.9999594	& 0.9998494 \\ \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Choice of Optimization Algorithm}
+\label{subsec:ResultsChoiceOfOptAlgo}
+
+\subsection{Choice of Trading Strategy}
+\label{subsec:ResultsChoiceOfTradingStrategy}
+
+\newpage
+\section{Discussion and Conclusion} \label{sec:DiscussionAndConclusion}
+
+\subsection{A Note on Rounding}
+
+\newpage
+\begin{thebibliography}{3}
+	
+    \bibitem{Levenberg}
+    	Kenneth Levenberg.
+        \textit{A Method for the Solution of Certain Non-Linear Problems In Least Squares}.
+        Quarterly of Applied Mathematics, 2(1944): 164-168.
+    
+    \bibitem{Marquardt}
+    	Donald Marquardt.
+        \textit{An Algorithm for Least-Squares Estimation of Nonlinear Parameters}.  Journal of the Society for Industrial and Applied Mathematics, 11(2): 431-441.
+        
+	\bibitem{Gavin}
+        Henri P. Gavin.
+        \textit{The Levenberg-Marquardt Method for Nonlinear Least Squares Curve-Fitting Problems}.
+        Department of Civil and Environmental Engineering, Duke University.
+        Duke University: Duke, NC, USA, 2011: 1–15.
+    
+    \bibitem{Natenberg}
+    	Sheldon Natenberg (1994).
+        \textit{Option Volatility \& Pricing}.
+        United States of America:  McGraw-Hill.
+    
+    \bibitem{Gatheral}
+    	Jim Gatheral.
+        \textit{The Volatility Surface}.
+        Wiley, 2006.
+    
+    \bibitem{Lee}
+    	Roger W. Lee.
+        \textit{The Moment Formula for Implied Volatility at Extreme Strikes}.
+        Mathematical Finance, 14(3): 469-489, July 2004
+    
+	\bibitem{Fengler}
+	  Matthias R. Fengler,
+	  \textit{Arbitrage-free smoothing of the implied volatility surface}.
+	  Frankfurt am Main: Germany,
+	  March 23, 2005.
+	  
+
+\end{thebibliography}
+
+\newpage
+\section{Appendices} \label{Appendicies}
+\subsection{Construction of the Elastic Smile Parameterizations} \label{appendix:ElasticSmileDerivation}
+\subsubsection{First Order} \label{subsec:FirstOrderSmileConstruction}
+Elasticity can be defined as the percentage change in one variable verses the percentage change in another variable, i.e $\frac{\% \text{ change in } Y}{\% \text{ change in } X}$.  In the case of the option volatility smile, we are interested in the elasticity of volatility with respect to moneyness\footnote{Recall that option's whose strikes are above or below the at-the-money strike are referred to as either in-the-money or out-of-the-money.}.  In other words, we are interested in the percentage change in volatility with respect to the percentage change from the forward price.
+\newpar
+Let $\mathbb{E}$ be the elasticity of volatility with respect to moneyness.  Then the construction of any of our elastic smile parameterization variants begins with two assumptions:
+\begin{enumerate}
+\item If $\mathbb{E}$ applies to strikes below the forward price, then $\mathbb{E}^{-1}$ applies to strikes above \label{SkewInvertedAssumption}
+\item $\mathbb{E}$ remains constant through the entire strike range
+\end{enumerate}
+  Let $\sigma_0$ be the volatility at the at-the-money strike and let strikes be distributed in one percent increments of the forward price.  Then under the above assumptions, the volatility the next strike one percent further from the forward price will be:
+\begin{align*}
+    \sigma_1 &= \sigma_0\mathbb{E}.
+\end{align*}
+Continuing to each successive \underline{one percent} change in strike shows
+\begin{alignat*}{3}
+    \sigma_2 &= &&\sigma_1\mathbb{E} = \sigma_0\mathbb{E}^{2} \\
+    \sigma_3 &= &&\sigma_2\mathbb{E} = \sigma_0\mathbb{E}^{3} \\
+        &\vdotswithin{=}\\
+    \sigma_i &= &&\sigma_{i-1}\mathbb{E} = \sigma_0\mathbb{E}^{n_i}, \numberthis \label{eq:FirstOrderIthStrikeVol}
+\end{alignat*}
+where $\sigma_i$ is the volatility at the $i$\textsuperscript{th} strike, and $n_i$ is the percentage change from the forward price of the $i$\textsuperscript{th} strike.  By definition, the percentage change from the forward price in terms of strike $k$ is defined as
+\begin{equation*}
+n(k) = 	\begin{cases}
+			n_L(k) = \frac{100\left(f-k\right)}{f} & : k < f\\
+            n_R(k) = \frac{100\left(k-f\right)}{f} & : k \geq f\\
+		\end{cases},
+\end{equation*}
+where $f$ is the calculated forward price given a particular option expiration date (i.e, given a specific time to expiration).  Note that by this definition, $n(k)$ must always be positive.
+\newpar
+Now let the volatility at the forward price be denoted as $\sigma_f$ rather than $\sigma_0$, and let $\mathbb{E}$ be equal to some constant $\mathbb{S}$.  Then by adhering to assumption \ref{SkewInvertedAssumption}, the first order smile becomes
+\begin{equation*}
+\Sigma(k) = \begin{cases}
+			\sigma_f\mathbb{S}^{n(k)} & : k < f\\
+            \sigma_f\left(\frac{1}{\mathbb{S}}\right)^{n(k)} & : k \geq f\\
+        \end{cases}.
+\end{equation*}
+
+If we instead allow $n(k)$ to be negative above the forward price, i.e $n(k) = \frac{100\left(f-k\right)}{f} \ \forall k$, then we can simplify $\Sigma(k)$ to be
+
+\begin{equation*}
+	\Sigma(k) = \sigma_f\mathbb{S}^{n(k)},
+\end{equation*}
+which has a continuous first derivative at $k=f$:
+\begin{equation*}
+    \lim_{k\to f^-}\frac{\partial \Sigma(k)}{\partial k} = \frac{100\sigma_f\ln(\mathbb{S})}{f} = \lim_{k\to f^+}\frac{\partial \Sigma(k)}{\partial k}.
+\end{equation*}
+
+\subsubsection{Second Order}
+As in section \ref{subsec:FirstOrderSmileConstruction}, let $\mathbb{E}$ be the elasticity of volatility with respect to moneyness.  Then construction of the second order parameterization requires the following assumptions, which differ slightly from the previous ones made for the construction of the first order.
+
+\begin{enumerate}
+\item If $\mathbb{E}$ applies to strikes below the forward price, then $\mathbb{E}^{-1}$ applies to strikes above (same as in the first order parameterization).
+\item $\mathbb{E}$ is no longer constant.  It has its own elasticity with respect to moneyness, denoted as $\mathbb{E}'$
+\item $\mathbb{E}'$ is constant for strikes both below and above the forward price, but has separate values for two ranges that are not necessarily equal.
+\end{enumerate}
+
+Let $\mathbb{E}_0$ be the elasticity of the volatility at the at-the-money strike, $\mathbb{E}'$ be the elasticity of $\mathbb{E}_0$, and let strikes be distributed in one percent increments of the forward price.  Then under the above assumptions, the volatility at the next strike one percent increment from the forward price will be
+
+\begin{alignat*}{3}
+	\mathbb{E}_1 &= \mathbb{E}_0\mathbb{E}' \\
+    \mathbb{E}_2 &= \mathbb{E}_1\mathbb{E}' &&= \mathbb{E}_0\left(\mathbb{E}'\right)^2 \\
+    \mathbb{E}_3 &= \mathbb{E}_2\mathbb{E}' &&= \mathbb{E}_0\left(\mathbb{E}'\right)^3 \\
+    &\vdotswithin{=}\\
+    \mathbb{E}_i &= \mathbb{E}_{i-1}\mathbb{E}' &&= \mathbb{E}_0\left(\mathbb{E}'\right)^{n_i},
+\end{alignat*}
+
+Where $\mathbb{E}_i$ is the elasticity of the volatility with respect to moneyness at the $i$\textsuperscript{th} strike, and $n_i$ is the percentage change from the forward price of the $i$\textsuperscript{th} strike.  
+\newpar
+Recall that for the first order, we have $\sigma_i = \sigma_0\mathbb{E}^{n_i}$ (see equation \ref{eq:FirstOrderIthStrikeVol}).  For the second order parameterization (and higher orders), we have a non-constant $\mathbb{E} = \mathbb{E}_i$ that depends on the $i$\textsuperscript{th} strike.  Hence the volatility at the $i$\textsuperscript{th}  strike, $\sigma_i$, becomes
+
+\begin{equation*}
+	\sigma_i = \sigma_0\mathbb{E}_i^{n_i} = \sigma_0\left(\mathbb{E}_0\left(\mathbb{E}'\right)^{n_i}\right)^{n_i} = \sigma_0\mathbb{E}_0^{n_i}\left(\mathbb{E'}\right)^{n_i^{2}}.
+\end{equation*}
+
+Denote the volatility at the forward price $\sigma_0$ as $\sigma_f$, the initial elasticity of volatility with respect to moneyness $\mathbb{E}_0$ as $\mathbb{S}$, and the elasticity of $\mathbb{S}$ as $\mathbb{C}_l$ for strikes below the forward price and $\mathbb{C}_r$ for strikes above or equal to the forward price.  Additionally, let $n(k) = \frac{100\left(f-k\right)}{f} \ \forall k$.  Then the second order smile is
+
+\begin{equation*}
+\Sigma(k) = \begin{cases}
+			\sigma_f\mathbb{S}^{n(k)}\mathbb{C}_l^{n^{2}(k)} & : k < f	\\
+            \sigma_f\mathbb{S}^{n(k)}\mathbb{C}_r^{n^{2}(k)} & : k \geq f	\\
+        \end{cases},
+\end{equation*}
+
+as given in equation \ref{SecondOrderSmile}.
+
+\newpage
+\section{Glossary} \label{Glossary}
+
+\textbf{Call Option (American)}: A derivative contract that gives the owner the right, not the obligation, to buy a specified amount of a given asset at a decided upon price on or before the expiration date.
+\newline \newline
+\textbf{Call Option (European)}: A derivative contract that gives the owner the right, not the obligation, to buy a specified amount of a given asset at a decided upon price on the expiration date.
+\newline \newline
+\textbf{Exercise Price}: The price or strike price at which the underlying asset will be delivered should the holder of the option choose to exercise his or her right to buy or sell
+\newline \newline
+\textbf{Extrinsic Value}: The additional amount of premium of an option beyond the intrinsic value. Equivalent to \textit{Time Value}.
+\newline \newline
+\textbf{Long Position}: A position in an asset that will theoretically increase in value as the price of the asset rises.
+\newline \newline
+\textbf{Premium}: The price of an option
+\newline \newline
+\textbf{Put Option (American)}: A derivative contract that gives the owner the right, not the obligation, to sell a specified amount of a given asset at a decided upon price on or before the expiration date.
+\newline \newline
+\textbf{Put Option (European)}: A derivative contract that gives the owner the right, not the obligation, to sell a specified amount of a given asset at a decided upon price on the expiration date.
+\newline \newline
+\textbf{Short Position}: A position in an asset that will theoretically increase in value as the price of the asset declines.
+\newline \newline
+\textbf{Strike Price}: The price or exercise price at which the underlying asset will be delivered should the holder of the option choose to exercise his or her right to buy or sell.
+\newline \newline
+\textbf{Time Value}: The option premium less the intrinsic value.  Equivalent to \textit{Extrinsic Value}
+\newline \nolinebreak
+\textbf{Vanilla Option}: A normal call or put option that has no special or unusual features
+
+\end{document}
