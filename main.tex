@@ -815,80 +815,88 @@ When comparing chosen model functions from a mathematical standpoint, the coeffi
 The concepts of `realized' and `unrealized' positions were utilized to assess the performance of a trading simulation over the course of the trading day.  The realized position is simply the current cash position caused by buying or selling options.  The unrealized position represents the amount it would cost to liquidate all open positions based on a snapshot of market prices.  The unrealized and realized position were recalculated for each trading interval, after the trading simulation ran and.  The sum of these two types of positions provided the end performance measure - it represents the amount of cash one would walk away with should the decision be made to liquidate all open positions immediately while also taking into account the amount of capital put forward to arrive at such an option position.
 
 \subsection{Choice of Function Definition}\label{subsec:ResultsChoiceOfFunc}
-The choice in parameterization had the clearest affect on the trading simulation profit or loss.  It should not be surprising that a bad choice in function model can result in even worse theoretical values, but a more quantitative result is presented here.  In fact, the profit or loss differences were so stark in some cases that it was impossible to gain any useful information when they were all plotted together on a single plot.  Thus, figures \ref{fig:TSLA_Mar_LinQuadElast}, \ref{fig:TSLA_Jan_LinQuadElast}, and \ref{fig:NVDA_Jan_LinQuadElast} show the profit and loss results for trading simulations running off of the linear, quadratic and elastic parameterizations, while figures \ref{fig:TSLA_Mar_SmileTwist}, \ref{fig:TSLA_Jan_SmileTwist} show the results of those running off of quadratic, smile, and twist parameterizations.  Further detail is presented in Table \ref{table:ResultProfitDetailByFuncChoice}.  All optimizations were performed with the vol-width-vega-multiplier weighting style and all trading simulations were done with the Tiny \%-Edge trader.
+The choice in parameterization had the clearest affect on the trading simulation profit or loss.  It should not be surprising that a bad choice in function model can result in even worse theoretical values, but a more quantitative result is presented here.  In fact, the profit or loss differences were so stark in some cases that it was impossible to gain any useful information when they were all plotted together on a single plot.  Thus, figures \ref{fig:TSLA_Mar_LinQuadElast}, \ref{fig:TSLA_Jan_LinQuadElast}, and \ref{fig:NVDA_Jan_LinQuadElast} show the profit and loss results for trading simulations running off of the linear, quadratic and elastic parameterizations, while figures \ref{fig:TSLA_Mar_SmileTwist}, \ref{fig:TSLA_Jan_SmileTwist} show the results of those running off of quadratic, smile, and twist parameterizations.  Further detail is presented in tables \ref{table:TSLA_Mar_FuncChoiceProfitDetail}, \ref{table:TSLA_Jan_FuncChoiceProfitDetail}, and \ref{table:NVDA_Jan_FuncChoiceProfitDetail}.  All optimizations presented here were performed with the VWVM weighting style and all trading simulations were done with the Tiny \%-Edge trader.
 
 \img{P\&L for TSLA 3/16/18 Linear, Quadratic, Elastic Parameterizations}{TSLA_Mar_LinQuadElast}{fig:TSLA_Mar_LinQuadElast}
 
 \img{P\&L for TSLA 3/16/18 Smile, Twist Parameterizations}{TSLA_Mar_SmileTwist}{fig:TSLA_Mar_SmileTwist}
 
+\begin{center}
+    \captionof{table}{TSLA 3/16/18 Profit Detail by Parameterization Choice}
+    \label{table:TSLA_Mar_FuncChoiceProfitDetail}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Function} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Avg At Close} \\ \hline
+        Linear 	    & \$23,727  & -\$43,913 & 82    & -\$68.70	\\ \hline
+        Quadratic   & \$3,745 	& -\$73,832	& 80 	& -\$833.39	\\ \hline
+        Elastic 	& \$18,538 	& -\$53,935 & 96 	& -\$158.66	\\ \hline
+        Smile 	    & \$11,980 	& -\$5,800	& 10  	&  \$450.50	\\ \hline
+        Twist 	    & \$10,271 	& -\$5,753	& 13	&  \$273.46	\\ \hline
+    \end{tabular}
+  \end{center}
+
 \img{P\&L for TSLA 1/18/19 Linear, Quadratic, Elastic Parameterizations}{TSLA_Jan_LinQuadElast}{fig:TSLA_Jan_LinQuadElast}
 
 \img{P\&L for TSLA 1/18/19 Smile, Twist Parameterizations}{TSLA_Jan_SmileTwist}{fig:TSLA_Jan_SmileTwist}
 
-\img{P\&\L for NVDA Linear, Quadratic, Elastic Parameterizations}{NVDA_Jan_LinQuadElast}{fig:NVDA_Jan_LinQuadElast}
-
-\begin{figure}[H]
-	\caption{Profit \& Loss for Quadratic, Smile, and Twist Parameterizations}
-	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceGoodModels}}
-	\label{fig:ResultFuncGainsOrMinorLoss}
-\end{figure}
-
 \begin{center}
-  \captionof{table}{Profit Detail by Parameterization Choice}
-  \label{table:ResultProfitDetailByFuncChoice}
-  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
-      \hline
-      \rowcolor{LightGreen}
-      \textbf{Function} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Avg At Close} \\
-      \hline
-      Raw 		& \$1,122 	& -\$3,280 	& 3 	& -\$573.33	\\ \hline
-      Linear 	& \$725     & -\$13,210 & 47	& -\$245.21	\\ \hline
-      Elastic 	& \$4,710 	& -\$12,730 & 46 	& -\$178.26	\\ \hline
-      Quadratic & \$16,303 	& -\$24,061	& 151 	& -\$57.68	\\ \hline
-      Smile 	& \$5,300 	& -\$3,700 	& 8  	&  \$134.38	\\ \hline
-      Twist 	& \$8,292 	& -\$14,390	& 14	&  \$229.50	\\
-      \hline
-  \end{tabular}
+    \captionof{table}{TSLA 1/18/19 Profit Detail by Parameterization Choice}
+    \label{table:TSLA_Jan_FuncChoiceProfitDetail}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Function} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Avg At Close} \\ \hline
+        Linear 	    & -\$3,960  & -\$348,470 & 222  & -\$1,300.78	\\ \hline
+        Quadratic   & \$0 	    & -\$400,522 & 455 	& -\$761.05	    \\ \hline
+        Elastic 	& -\$3,480 	& -\$296,408 & 198 	& -\$1,217.56	\\ \hline
+        Smile 	    & \$7,710 	& -\$6,053	 & 34  	& -\$56.41	    \\ \hline
+        Twist 	    & \$785 	& -\$437	 & 6	&  \$25.00	    \\ \hline
+    \end{tabular}
 \end{center}
 
-Figures \ref{fig:ResultChoiceInFuncLinearR2Hist}, \ref{fig:ResultChoiceInFuncElasticR2Hist}, \ref{fig:ResultChoiceInFuncQuadraticR2Hist},
-\ref{fig:ResultChoiceInFuncSmileR2Hist}, \ref{fig:ResultChoiceInFuncTwistR2Hist} show the distribution of unweighted $R^2$ values for each parameterization choice over all optimizations throughout the simulation day.  For cross-comparison, a box plots are provided in Figure \ref{fig:ResultChoiceInFuncR2Dist}
+\img{P\&L for NVDA 1/18/19 Linear, Quadratic, Elastic Parameterizations}{NVDA_Jan_LinQuadElast}{fig:NVDA_Jan_LinQuadElast}
 
-\begin{figure}[H]
-	\caption{R\textsuperscript{2} Distribution From Linear Parameterization}
-	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceLinearR2Hist}}
-	\label{fig:ResultChoiceInFuncLinearR2Hist}
-\end{figure}
+\img{P\&L for NVDA 1/18/19 Smile, Twist Parameterizations}{NVDA_Jan_SmileTwist}{fig:NVDA_Jan_SmileTwist}
 
-\begin{figure}[H]
-	\caption{R\textsuperscript{2} Distribution From Elastic Parameterization}
-	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceElasticR2Hist}}
-	\label{fig:ResultChoiceInFuncElasticR2Hist}
-\end{figure}
+\begin{center}
+    \captionof{table}{NVDA 1/18/19 Profit Detail by Parameterization Choice}
+    \label{table:NVDA_Jan_FuncChoiceProfitDetail}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Function} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Avg At Close} \\ \hline
+        Linear 	    & \$0       & -\$204,716 & 185  & -\$951.15	    \\ \hline
+        Quadratic   & \$400 	& -\$43,805  & 78 	& -\$262.18	    \\ \hline
+        Elastic 	& \$690 	& -\$215,531 & 197 	& -\$944.37	    \\ \hline
+        Smile 	    & \$11,842 	& -\$4,463	 & 23  	&  \$78.78	    \\ \hline
+        Twist 	    & \$1,400 	& -\$4,796	 & 8	& -\$365.75	    \\ \hline
+    \end{tabular}
+\end{center}
 
-\begin{figure}[H]
-	\caption{R\textsuperscript{2} Distribution From Quadratic Parameterization}
-	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceQuadraticR2Hist}}
-	\label{fig:ResultChoiceInFuncQuadraticR2Hist}
-\end{figure}
+For visual representations of when trades are actually happening, the following six figures show the profit and lost for smile and twist for each of the three expirations previously presented (TSLA 3/16/18 and 1/18/19 and NVDA 1/18/19):
 
-\begin{figure}[H]
-	\caption{R\textsuperscript{2} Distribution From Smile Parameterization}
-	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceSmileR2Hist}}
-	\label{fig:ResultChoiceInFuncSmileR2Hist}
-\end{figure}
+\img{TSLA 3/16/18 Smile Profit Detail With Trades}{TSLA_Mar_SmileWithTrades}{fig:TSLA_Mar_SmileWithTrades}
 
-\begin{figure}[H]
-	\caption{R\textsuperscript{2} Distribution From Twist Parameterization}
-	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceTwistR2Hist}}
-	\label{fig:ResultChoiceInFuncTwistR2Hist}
-\end{figure}
+\img{TSLA 3/16/18 Twist Profit Detail With Trades}{TSLA_Mar_TwistWithTrades}{fig:TSLA_Mar_TwistWithTrades}
 
-\begin{figure}[H]
-	\caption{R\textsuperscript{2} Distribution by Parameterization Choice}
-	\centerline{\includegraphics[width=1\textwidth]{FuncChoiceR2Box}}
-	\label{fig:ResultChoiceInFuncR2Dist}
-\end{figure}
+\img{TSLA 1/18/19 Smile Profit Detail With Trades}{TSLA_Jan_SmileWithTrades}{fig:TSLA_Jan_SmileWithTrades}
+
+\img{TSLA 1/18/19 Twist Profit Detail With Trades}{TSLA_Jan_TwistWithTrades}{fig:TSLA_Jan_TwistWithTrades}
+
+\img{NVDA 1/18/19 Smile Profit Detail With Trades}{NVDA_Jan_SmileWithTrades}{fig:NVDA_Jan_SmileWithTrades}
+
+\img{NVDA 1/18/19 Twist Profit Detail With Trades}{NVDA_Jan_TwistWithTrades}{fig:NVDA_Jan_TwistWithTrades}
+
+Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2Hist},
+\ref{fig:SmileR2Hist}, \ref{fig:TwistR2Hist} show the distribution of unweighted $R^2$ values for each parameterization choice over all optimizations throughout the simulation day.
+
+\img{R\textsuperscript{2} Distribution from Linear Parameterization}{LinearR2Hist}{fig:LinearR2Hist}
+
+\img{R\textsuperscript{2} Distribution from Quadratic Parameterization}{QuadraticR2Hist}{fig:QuadraticR2Hist}
+
+\img{R\textsuperscript{2} Distribution from Elastic Parameterization}{ElasticR2Hist}{fig:ElasticR2Hist}
+
+\img{R\textsuperscript{2} Distribution from Smile Parameterization}{SmileR2Hist}{fig:SmileR2Hist}
+
+\img{R\textsuperscript{2} Distribution from Twist Parameterization}{TwistR2Hist}{fig:TwistR2Hist}
 
 \subsection{Choice of Weighting Scheme}
 \label{subsec:ResultsChoiceOfWeight}
