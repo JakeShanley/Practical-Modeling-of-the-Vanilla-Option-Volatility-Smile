@@ -11,6 +11,7 @@
 \usepackage[font=small]{caption}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage[hidelinks]{hyperref}
 \onehalfspacing
 
 \usepackage{xcolor,colortbl}
@@ -158,6 +159,7 @@ Any simple or complex option trading strategy that a trader employs is made up o
 Suppose a trader is looking at an option board for some underlying asset on the CBOE.  In particular, suppose he or she is looking at an expiration that offers the following options:
 %	Note that the table column colors may appear to overwrite some of the table vertical lines, however the table will look fine in the actual PDF.
 \begin{center}
+    \captionsetup{hypcap=false}
   \captionof{table}{Example Option Board for some Expiration and Underlying Asset}
   \label{table:ExampleOptionBoard}
   \begin{tabular}{ |c|c| >{\columncolor{Gray}}c |c|c| }
@@ -523,8 +525,9 @@ From a trading standpoint, not all strikes are created equal.  Thus it is import
 Two types of least squares optimization are compared for the chosen parameterization schemes in section \ref{sec:VolSmileParameterizations}:  The Gauss-Newton and Levenberg-Marquardt algorithms.  Both C\# implementations of the algorithms are designed for ease in adding a new parameterization.  One can add a new parameterization by simply defining a few function calls that the algorithm will use, rather than rewriting an entire new copy of the chosen optimization algorithm specifically tailored to the new parameterization scheme\footnote{Note that this algorithmic design pattern only applies to dense datasets such as the option volatility smile, and does not take advantage of any sparsity arguments that can often be made when solving other problems in optimization.}.  Additionally, both the Gauss-Newton and Levenberg-Marquardt algorithms were arbitrarily chosen to stop when the difference between the sum of least squares from the previous step and the current step were less than $10^{-14}$ in magnitude.
 \newpar
 The freely available Math.Net Numerics library\footnote{https://numerics.mathdotnet.com/} for C\# was utilized for necessary linear algebra computations.  This allowed focus to remain on the raw process of the optimization algorithm and avoided the recreation of already established and well-known algorithms in linear algebra.
+
 \subsubsection{The Least Squares Problem, in General}
-The retrieved option data, once processed (section \ref{sec:CollectionOfData}), provides a set of $N$ strike-volatility pairs $\{(k_i,\sigma_i) \ ; \ i = 1,2,\cdots,N\}$.  We then pick a function $f(k,\lambdaVect)$ to model the $N$ data points.  Here, $\lambdaVect = [\lambda_1, \lambda_2, \cdots, \lambda_M]^T$ is a $1 \times M$ vector of parameters $(M < N)$ for the function $f(k,\lambdaVect)$.  Then the error at the $i^{th}$ strike $k_i$ is $r_i = \sigma_i - f(k_i, \lambdaVect)$, where $\sigma_i$ is the input volatility at $i^{th}$ strike.
+The retrieved option data, once processed (section \ref{sec:CollectionOfData}), provides a set of $N$ strike-volatility pairs $\{(k_i,\sigma_i) \ ; \ i = 1,2,\cdots,N\}$.  We then pick a function $f(k,\lambdaVect)$ to model the $N$ data points.  Here, $\lambdaVect = [\lambda_1, \lambda_2, \cdots, \lambda_M]^T$ is a $1 \times M$ vector of parameters $(M < N)$ for the function $f(k,\lambdaVect)$, with $k$ being an independent variable.  Then the error at the $i^{th}$ strike $k_i$ is $r_i = \sigma_i - f(k_i, \lambdaVect)$, where $\sigma_i$ is the input volatility at $i^{th}$ strike.
 \newpar
 The goal of any least-squares optimization process is then to find the $M$ parameter values of $\lambdaVect$ that minimize the sum of squared errors.  In other words, we want to find $\lambdaVect$ so that the function
 \begin{equation}
@@ -533,15 +536,28 @@ The goal of any least-squares optimization process is then to find the $M$ param
 \end{equation}
 is minimized.
 \newpar
-Additionally, a weighting factor is assigned for each data point.  Let the weighting factor for the $i^{th}$ data point be denoted as $w_i$.  Then equation \ref{eq:LeastSquaresF} becomes
+Additionally, a weighting factor can easily be applied for each data point.  Let the weighting factor for the $i^{th}$ data point be denoted as $w_i$.  Then equation \ref{eq:LeastSquaresF} becomes
 \begin{equation}
-	F(\lambdaVect) = \sum_{i=1}^{N}(\sigma_i - f(k_i,\lambdaVect))^2 w_i = \sum_{i=1}^{N}r_i^2 w_i.
+	F(\lambdaVect) = \sum_{i=1}^{N}(\sigma_i - f(k_i,\lambdaVect))^2w_i = \sum_{i=1}^{N}r_i^2w_i.
     \label{eq:LeastSquaresFWeighted}
 \end{equation}
-In the case of a linear $f(k,\lambdaVect) = ak + b$ parameterization and even weighting scheme, for example, we will have $\lambdaVect = (a, b)^T$ and $w_i = 1 \enskip \forall \enskip i = 1, \cdots, N$.
-\newpar
-For the following sections \ref{subsubsec:GaussNewton} and \ref{subsubsec:LevenbergMarquardt}, we define the following:
 
+Modelling the option volatility smile for practical purposes has empirically required some set of nonuniform weighting factors.  This project requires the obtaining of a parameter vector $\lambdaVect$ that minimizes equation \ref{eq:LeastSquaresFWeighted}.  In the case of a linear $f(k,\lambdaVect) = ak + b$ parameterization and even weighting scheme, for example, we will have $\lambdaVect = (a, b)^T$ and $w_i = 1 \enskip \forall \enskip i = 1, \cdots, N$.
+\newpar
+Let $\pmb{\sigma} = [\sigma_1, \sigma_2, \cdots, \sigma_N]^T$ and
+    $\pmb{f}(\lambdaVect) = [f(k_1,\lambdaVect), f(k_2,\lambdaVect)\cdots, f(k_N,\lambdaVect)]^T$.
+Then it follows that $\pmb{r}(\lambdaVect) = \pmb{\sigma} - \pmb{f}(\lambdaVect)$ and from equation \ref{eq:LeastSquaresFWeighted},
+\begin{equation}
+    F(\lambdaVect) = (\pmb{\sigma} - \pmb{f}(\lambdaVect))^T W (\pmb{\sigma} - \pmb{f}(\lambdaVect)) = \pmb{r}(\lambdaVect)^T W \pmb{r}(\lambdaVect).
+    \label{eq:LeastSquaresFWeightedMatrix}
+\end{equation}
+Where $W$ is a diagonal $N \times N$ matrix with $W_{ii} = w_i$.
+
+\subsubsection{Gauss-Newton and Levenberg-Marquardt}\label{subsubsec:GNLM}
+
+Since most of the model functions analyzed in this project are nonlinear, the minimization of $F(\lambdaVect)$ was carried out in an iterative manner using either the Gauss-Newton or Levenberg-Marquardt process\footnote{The Gradient Descent method was also explored, but this algorithm proved to be much, much slower than the Gauss-Newton and Levenberg-Marquardt and required constant adjustment to its input settings (like step size) for each data set.  For these reasons it was deemed unfit for practical use in a trading environment and thus left out of this project}.  The goal for either algorithm at each step is to find a step vector $\pmb{\eta}$ such that $F(\lambdaVect + \pmb{\eta}) < F(\lambdaVect)$.  In other words, so that the resulting sum of least squares is reduced\textsuperscript{\cite{Gavin}}.
+\newpar
+For the outlines of both optimization algorithms, we define the following:
 \begin{itemize}
 \item $s$ as current step number in the iteration 
 \item $J$ as the $N \times M$ Jacobian matrix of the of the function $f(k,\lambdaVect)$.  That is, 
@@ -549,20 +565,24 @@ For the following sections \ref{subsubsec:GaussNewton} and \ref{subsubsec:Levenb
 	J_{ij} = \frac{\partial f(k_i,\lambdaVect)}{\partial \lambda_j}, \quad i = 1,\cdots, N \quad \text{and} \quad j = 1,\cdots, M.
 \end{equation*}
 \item $\lambdaVect_s$ as the approximate solution vector at step $s$
-\item $\pmb{\sigma} = \begin{bmatrix} \sigma_1 \\ \vdots \\ \sigma_N \end{bmatrix}$
-\item $\pmb{f}(\lambdaVect) = \begin{bmatrix} f(k_1,\lambdaVect) \\ \vdots \\ f(k_N,\lambdaVect) \end{bmatrix}$
 \end{itemize}
 
-\subsubsection{The Gauss-Newton Algorithm}\label{subsubsec:GaussNewton}
-The Gauss-Newton optimization algorithm is widely known.  The pseudocode for the C\# implementation of the Gauss-Newton algorithm is as follows:
-
+\textbf{\underline{The Gauss-Newton Algorithm}}
+\newline
+CHANGE
+The Gauss-Newton method presumes that the objective function is locally quadratic (approximately) in the parameters near the optimal solution\textsuperscript{\cite{Bjorck}}.  From \cite{Gavin}, the step vector at each step for for the Gauss-Newton method can be found by solving 
+\begin{equation}
+    (J^T W J) \pmb{\eta} = J^T W (\pmb{\sigma} - \pmb{f}(\lambdaVect))
+\end{equation}
+for the vector $\pmb{\eta}$.  Pseudocode for the C\# implementation of the this algorithm is as follows:
 \begin{enumerate}
 	\item Set $s = 0$ and $\lambdaVect_s = \lambdaVect_0$
     \item while $s < maxSteps$
       \begin{enumerate}
           \item $\pmb{d} = \pmb{\sigma} - \pmb{f}(k,\lambdaVect_{s})$
           \item Calculate $J$ from $\pmb{f}(k,\lambdaVect_{s})$
-          \item $\lambdaVect_{s+1} = \lambdaVect_{s} + J^{-1}\pmb{d}$, where $J^{-1}$ is the Moore-Penrose pseudoinverse.
+          \item Solve $(J^T W J) \pmb{\eta} = J^T W \pmb{d}$ for $\pmb{\eta}$
+          \item $\lambdaVect_{s+1} = \lambdaVect_{s} + \pmb{\eta}$
           \item $stop = |F(\lambdaVect_{s}) - F(\lambdaVect_{s+1})| \leq 10^{-14}$
           \item $\lambdaVect_{s} = \lambdaVect_{s+1}$
           \item $s = s + 1$
@@ -571,8 +591,30 @@ The Gauss-Newton optimization algorithm is widely known.  The pseudocode for the
     \item Calculate $R^2$.\label{GN_CalcR2}
 \end{enumerate}
 
-\subsubsection{The Levenberg-Marquardt Algorithm}\label{subsubsec:LevenbergMarquardt}
-The Levenberg-Marquardt algorithm in this project was adapted directly from Levenberg\textsuperscript{\cite{Levenberg}}.  Pseudocode for the C\# implementation is as follows:
+\textbf{\underline{The Levenberg-Marquardt Algorithm}}
+\newline
+The Levenberg-Marquardt algorithm in this project was adapted directly from Levenberg \cite{Levenberg} and Marquardt \cite{Marquardt}.  From Marquardt, the step $\pmb{\eta}$ to make to the parameter vector $\lambdaVect$ at each step is given by solving
+\begin{equation}
+    (J^T W J + \kappa I)\pmb{\eta} = J^T W (\pmb{\sigma} - \pmb{f}(k,\lambdaVect_{s}))
+    \label{eq:LevenbergUpdate}
+\end{equation}
+for the step vector $\pmb{\eta}$, where $I$ is the identity matrix.  The parameter $\kappa$ allows the algorithm to update $\lambdaVect$ with a combination of both a Gauss-Newton step and a steepest descent step.  For small $\kappa$, the step vector $\pmb{\eta}$ results in a Gauss-Newton update.  For large $\kappa$, the step $\pmb{\eta}$ results in a Gradient Descent update\textsuperscript{\cite{Gavin}}.
+\newpar
+Marquardt proposes a modification to the algorithm that replaces the identity matrix $I$ in equation \ref{eq:LevenbergUpdate} with a diagonal matrix consisting of the diagonal elements of $J^T J$.  This modification is utilized in this project, and causes equation \ref{eq:LevenbergUpdate} to become
+\begin{equation}
+    (J^T W J + \kappa \; \text{diag}(J^T W J))\pmb{\eta} = J^T W (\pmb{\sigma} - \pmb{f}(k,\lambdaVect_{s})).
+    \label{eq:MarquardtUpdate}
+\end{equation}
+Once an initial value for $\kappa$ is chosen\footnote{For this project, the initial value was chosen to be $\kappa = 0.01$}, a decision must then be made on how to update this parameter at each step.  While there are many papers discussing methods to update $\kappa$, the update strategy used here follows directly from Marquardt (\cite{Marquardt}).
+\newpar
+Let $\Phi(\kappa_s)$ be the sum of squares at step $s$ after applying equation \ref{eq:MarquardtUpdate} with $\kappa = \kappa_s$.  Let $\rho > 1$ be some constant\footnote{Fixing $\rho = 2$ seemed to suffice for all datasets analyzed here.}.  Then at each next step $s + 1$, $\kappa_{s + 1}$ is determined by the following process:
+\begin{itemize}
+    \item If $\Phi( \frac{\kappa_{s}}{\rho}) \leq \Phi(\kappa_{s})$, then $\kappa_{s+1} = \frac{\kappa_{s}}{\rho}$.
+    \item Else find the minimum integer $w \geq 1$ such that $\Phi(\kappa_s \rho^w) \leq \Phi(\kappa_{s})$.  Then $\kappa_{s+1} = \kappa_s \rho^w$.
+\end{itemize}
+
+
+Pseudocode for the C\# implementation of the Levenberg-Marquardt algorithm is as follows:
 
 \begin{enumerate}
 	\item $\kappa = 0.01$, $\rho = 2.0$, $\lambdaVect_s = \lambdaVect_0$
@@ -581,12 +623,12 @@ The Levenberg-Marquardt algorithm in this project was adapted directly from Leve
         	\item $\pmb{d} = \pmb{\sigma} - \pmb{f}(k, \pmb{\lambda}_{s})$
             \item Calculate $J$ from $\pmb{f}(k, \pmb{\lambda}_{s})$
             \item $\kappa = \frac{\kappa}{\rho}$
-            \item Solve $\left(J^{T}J + \kappa diag(J^{T}J)\right) \pmb{\eta} = J^{T} \pmb{d}$
+            \item Solve $\left(J^{T} W J + \kappa \; \text{diag}(J^{T} W J)\right) \pmb{\eta} = J^{T} W \pmb{d}$ for $\pmb{\eta}$
             \item $\lambdaVect_{s+1} = \pmb{\lambda}_{s} + \pmb{\eta}$
             \item while $F(\lambdaVect_{s+1}) > F(\pmb{\lambda}_{s})$
                     \begin{enumerate}
                         \item $\kappa = \rho \kappa$              
-                        \item Solve $\left(J^{T}J + (\kappa) diag(J^{T}J)\right) \pmb{\eta}= J^{T} \pmb{d}$
+                        \item Solve $\left(J^{T} W J + \kappa \; \text{diag}(J^{T} W J)\right) \pmb{\eta} = J^{T} W \pmb{d}$ for $\pmb{\eta}$
                         \item $\lambdaVect_{s+1} = \pmb{\lambda}_{s} + \pmb{\eta}$
                     \end{enumerate}
             \item $stop = |F(\lambdaVect_{s}) - F(\lambdaVect_{s+1})| \leq 10^{-14}$
@@ -596,7 +638,7 @@ The Levenberg-Marquardt algorithm in this project was adapted directly from Leve
     	\end{enumerate}
    \item Calculate $R^2$. \label{LM_CalcR2}
 \end{enumerate}
-Note that there is often much discussion surrounding the parameter $\rho$.  Choosing this parameter can be difficult, and some problems even involve updating it at each iteration.  For this project, fixing $\rho = 2.0$ seemed to work out fine for all situations.
+Note that in one can precompute $J^T W J$, $diag(J^T W J)$, and $J^T W \pmb{d}$ to further minimize matrix and matrix-vector multiplications; a process that was implemented in the actual C\# code.
 
 \subsection{Trading Simulations}\label{sec:TradingStrategies}
 The end goal of this project is to show that the best parameterization of a volatility smile from a mathematical standpoint is not necessarily the best from a trading standpoint.  In addition to well-defined parameterizations, we require a handful of trading simulations that reasonably represent reality.  A trading simulation in this project consists of four pieces: the actual trading strategy, a scope on what it is allowed to trade, imposed limits to simulate risk exposure, and a timeframe for which to execute the simulations.
@@ -670,10 +712,10 @@ The end project scope was downsized in an effort to simplify the analysis of the
         \item Basic (section \ref{subsec:BasicParameterizations}):  Raw, Linear, Quadratic
         \item Elastic (section \ref{subsec:ElasticityParameterizations}): Elastic, Smile, Twist
     \end{enumerate}
-    \item Nonlinear least squares optimization algorithms
+    \item Nonlinear least squares optimization algorithms (section \ref{subsubsec:GNLM})
     \begin{enumerate}
-        \item Gauss-Newton (section \ref{subsubsec:GaussNewton})
-        \item Levenberg-Marquardt (section \ref{subsubsec:LevenbergMarquardt})
+        \item Gauss-Newton
+        \item Levenberg-Marquardt
     \end{enumerate}
     \item Nonlinear optimization weighting schemes (section \ref{sec:WeightingSchemes}): Evenly, VolWidth, VolWidthVegaMult
     \item Trading strategies (section \ref{sec:TradingStrategies}):  MarketCrossSingleOption, SmallEdgeSingleOption, LargeEdgeSingleOption
@@ -691,6 +733,7 @@ For the more visually inclined, let's consider options for TSLA that shared the 
 \end{figure}
 
 \begin{center}
+  \captionsetup{hypcap=false}
   \captionof{table}{TSLA 3/16/18 Midday Option Price Detail}
   \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
       \hline
@@ -749,6 +792,7 @@ Next, we pick a parameterization, optimization algorithm, and weighting scheme. 
 \end{figure}
 
 \begin{center}
+  \captionsetup{hypcap=false}
   \captionof{table}{TSLA 3/16/18 Optimized Volatility Detail, Multiplied by 100}
   \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c|c|c| }
       \hline
@@ -779,6 +823,7 @@ Once the optimized volatilites are obtained, they are converted back to theoreti
 Detail near the crossing point and next to the market prices is shown in the following table.
 
 \begin{center}
+  \captionsetup{hypcap=false}
   \captionof{table}{TSLA 3/16/18 Midday Theoretical and Option Price Detail}
   \begin{tabular}{ |>{\columncolor{Gray}}c|c|>{\columncolor{LightGreen}}c|c|c|>{\columncolor{LightGreen}}c|c| }
       \hline
@@ -803,10 +848,10 @@ The entire market data to theoretical value process is repeated many times throu
 It should be clear from the previous plots that some parameterizations are very poor models for the option volatility smile.  The practical implications of a poor model choice are addressed in the following sections.
 
 \newpage
-\section{Results} \label{sec:Results}
+\section{Results and Discussion} \label{sec:Results}
 Even after trimming the total possible scope down significantly, there are still many moving parts in this project\footnote{Removed parts include, but are not limited to:  hedging, near earnings move analysis, exchange and trading fees, other option pricing models, other closed-form and non closed-form volatility smile models, market data speed (maybe we are too slow to get on a trade or off a trade that we want), other trading strategies that involve market-making or inter-expiration trading, profit and loss beyond a single trading day, alternate stocks that have dividends, significantly positive or negative interest rates}.  Each moving part is individually isolated and analyzed to illustrate the mathematical and practical implications that arise for a given choice made at each step in the entire process.  All results presented here are those arbitrarily taken from experiments conducted on a single trading day:  February 12\textsuperscript{th}, 2018.
 \newpar
-Unless otherwise specified, any results presented here are those from simulations conducted with the Gauss-Newton algorithm (\ref{subsubsec:LevenbergMarquardt}), vol width vega multiplier weighting (\ref{sec:WeightingSchemes}), the tiny percent edge trader (\ref{subsec:TradingStrategiesAndScope}), one minute trading intervals, and risk bounds between -1000 and 1000 deltas (\ref{subsec:RiskExposureAndTimeFrame}).
+Unless otherwise specified, any results presented here are those from simulations conducted with the Gauss-Newton algorithm (\ref{subsubsec:GNLM}), vol width vega multiplier weighting (\ref{sec:WeightingSchemes}), the tiny percent edge trader (\ref{subsec:TradingStrategiesAndScope}), one minute trading intervals, and risk bounds between -1000 and 1000 deltas (\ref{subsec:RiskExposureAndTimeFrame}).
 \newpar
 Section \ref{subsec:ResultsChoiceOfFunc} shows the mathematical and practical implications of parameterization choice, \ref{subsec:ResultsChoiceOfWeight} illustrates the affects of a choice in weighting scheme, \ref{subsec:ResultsChoiceOfOptAlgo} presents observed differences when using the Gauss-Newton or Levenberg-Marquardt optimization algorithms, and finally \ref{subsec:ResultsChoiceOfTradingStrategy} shows the performance of different trading strategies.  All assessments are done over three data sets taken on February 12\textsuperscript{th}, 2018:  TSLA options expiring on 3/16/18 and 1/18/19, and NVDA options expiring on 1/18/19.
 \newpar
@@ -822,6 +867,7 @@ The choice in parameterization had the clearest affect on the trading simulation
 \img{P\&L for TSLA 3/16/18 Smile, Twist Parameterizations}{TSLA_Mar_SmileTwist}{fig:TSLA_Mar_SmileTwist}
 
 \begin{center}
+    \captionsetup{hypcap=false}
     \captionof{table}{TSLA 3/16/18 Profit Detail by Parameterization Choice}
     \label{table:TSLA_Mar_FuncChoiceProfitDetail}
     \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
@@ -840,6 +886,7 @@ The choice in parameterization had the clearest affect on the trading simulation
 \img{P\&L for TSLA 1/18/19 Smile, Twist Parameterizations}{TSLA_Jan_SmileTwist}{fig:TSLA_Jan_SmileTwist}
 
 \begin{center}
+    \captionsetup{hypcap=false}
     \captionof{table}{TSLA 1/18/19 Profit Detail by Parameterization Choice}
     \label{table:TSLA_Jan_FuncChoiceProfitDetail}
     \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
@@ -858,6 +905,7 @@ The choice in parameterization had the clearest affect on the trading simulation
 \img{P\&L for NVDA 1/18/19 Smile, Twist Parameterizations}{NVDA_Jan_SmileTwist}{fig:NVDA_Jan_SmileTwist}
 
 \begin{center}
+    \captionsetup{hypcap=false}
     \captionof{table}{NVDA 1/18/19 Profit Detail by Parameterization Choice}
     \label{table:NVDA_Jan_FuncChoiceProfitDetail}
     \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
@@ -886,7 +934,7 @@ For visual representations of when trades are actually happening, the following 
 \img{NVDA 1/18/19 Twist Profit Detail With Trades}{NVDA_Jan_TwistWithTrades}{fig:NVDA_Jan_TwistWithTrades}
 
 Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2Hist},
-\ref{fig:SmileR2Hist}, \ref{fig:TwistR2Hist} show the distribution of unweighted $R^2$ values for each parameterization choice over all optimizations throughout the simulation day.
+\ref{fig:SmileR2Hist}, \ref{fig:TwistR2Hist} show the distribution of unweighted $R^2$ values for each parameterization choice over all optimizations\footnote{Totaling $390 \times 3 = 1,170$ optimization runs} for all three expirations presented here throughout the simulation day.
 
 \img{R\textsuperscript{2} Distribution from Linear Parameterization}{LinearR2Hist}{fig:LinearR2Hist}
 
@@ -900,77 +948,109 @@ Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2His
 
 \subsection{Choice of Weighting Scheme}
 \label{subsec:ResultsChoiceOfWeight}
-
-\begin{figure}[H]
-	\caption{Profit \& Loss for Twist with Even, VW, and VWVM weighting schemes}
-	\centerline{\fbox{\includegraphics[width=1\textwidth]{ChoiceInWeightPnL}}}
-	\label{fig:ChoiceInWeightPnL}
-\end{figure}
+Weighting also had significant impact on the trading simulation's profit or loss.  For the Smile function choice, profit and loss details when different weighting schemes are applied are shown in tables \ref{tab:TSLA_Mar_SmileWeighting}, \ref{tab:TSLA_Jan_SmileWeighting}, and \ref{tab:NVDA_Jan_SmileWeighting}.
 
 \begin{center}
-  \captionof{table}{Profit Detail by Weighting Choice}
-  \label{table:ResultProfitDetailByWeightingChoice}
-  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
-      \hline
-      \rowcolor{LightGreen}
-      \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\
-      \hline
-      Even  & \$3,283 	& -\$9,464 	& 11 	& -\$14.00	\\ \hline
-      VW 	& \$8,740   & -\$14,390 & 13	& \$279.92	\\ \hline
-      VWVM  & \$8,292 	& -\$14,390	& 14 	& \$229.5	\\ \hline
-  \end{tabular}
+    \captionsetup{hypcap=false}
+    \captionof{table}{TSLA 3/16/18 Smile Profit Detail by Weighting Choice}
+    \label{tab:TSLA_Mar_SmileWeighting}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\ \hline
+        Even                    & \$3,398 	& -\$8,915 	& 23    & -\$113.35	\\ \hline
+        VW 	                    & \$10,570  & -\$8,641  & 21	& \$186.95	\\ \hline
+        VWVM                    & \$11,980 	& -\$5,800	& 10 	& \$450.50	\\ \hline
+        $\sqrt{\text{VWVM}}$    & \$12,296  & -\$8,895  & 17    & \$301.76  \\ \hline
+    $\text{VWVM}^2$             & \$8,283   & -\$4,950  & 9     & \$287.00  \\ \hline
+    \end{tabular}
 \end{center}
 
 \begin{center}
-  \captionof{table}{Unweighted R\textsuperscript{2} Detail by Weighting Choice}
-  \label{table:UnweightedR2DetailByWeightingChoice}
-  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c| }
-      \hline
-      \rowcolor{LightGreen}
-      \textbf{Weighting} & \textbf{Min} & \textbf{Max} & \textbf{Average} \\
-      \hline
-      Even  & 0.9997766 & 0.9999738 & 0.9999171 \\ \hline
-      VW 	& 0.9997720 & 0.9999738 & 0.9999166	\\ \hline
-      VWVM  & 0.9997720 & 0.9999737	& 0.9999155 \\ \hline
-  \end{tabular}
+    \captionsetup{hypcap=false}
+    \captionof{table}{TSLA 1/18/19 Smile Profit Detail by Weighting Choice}
+    \label{tab:TSLA_Jan_SmileWeighting}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\ \hline
+        Even                    & \$32,894 	& -\$69,060     & 234   & -\$179.43	\\ \hline
+        VW 	                    & \$66,093  & -\$50,685     & 158	& \$52.49	\\ \hline
+        VWVM                    & \$7,710 	& -\$6,053	    & 34 	& -\$56.41	\\ \hline
+        $\sqrt{\text{VWVM}}$    & \$74,807  & -\$29,255     & 70    & \$473.93  \\ \hline
+        $\text{VWVM}^2$         & \$8,283   & -\$4,950      & 9     & \$287.00  \\ \hline
+    \end{tabular}
 \end{center}
 
 \begin{center}
-  \captionof{table}{Weighted R\textsuperscript{2} Detail by Weighting Choice}
-  \label{table:WeightedR2DetailByWeightingChoice}
-  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c| }
-      \hline
-      \rowcolor{LightGreen}
-      \textbf{Weighting} & \textbf{Min} & \textbf{Max} & \textbf{Average} \\
-      \hline
-      Even  & 0.9997766 & 0.9999738 & 0.9999171 \\ \hline
-      VW 	& 0.9995797 & 0.9999731 & 0.9999108	\\ \hline
-      VWVM  & 0.9994544 & 0.9999649	& 0.9998818 \\ \hline
-  \end{tabular}
+    \captionsetup{hypcap=false}
+    \captionof{table}{NVDA 1/18/19 Smile Profit Detail by Weighting Choice}
+    \label{tab:NVDA_Jan_SmileWeighting}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\ \hline
+        Even                    & \$9,834 	& -\$88,183     & 204   & -\$167.63	\\ \hline
+        VW 	                    & \$26,473  & -\$40,766     & 96	& -\$108.45	\\ \hline
+        VWVM                    & \$11,842 	& -\$4,463	    & 23 	&  \$78.78	\\ \hline
+        $\sqrt{\text{VWVM}}$    & \$13,676  & -\$21,984     & 54    & -\$78.52  \\ \hline
+        $\text{VWVM}^2$         & \$775     & -\$5,065      & 13    & -\$171.15  \\ \hline
+    \end{tabular}
+\end{center}
+
+Tables \ref{tab:TSLA_Mar_TwistWeighting}, \ref{tab:TSLA_Jan_TwistWeighting}, and \ref{tab:NVDA_Jan_TwistWeighting} show the affect of weighting choice on profit and loss when modelling with the Twist function.
+
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{TSLA 3/16/18 Twist Profit Detail by Weighting Choice}
+    \label{tab:TSLA_Mar_TwistWeighting}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\ \hline
+        Even                    & \$3,006 	& -\$13,700	& 20    & -\$509.95	\\ \hline
+        VW 	                    & \$6,420   & -\$4,549  & 13	& \$92.31	\\ \hline
+        VWVM                    & \$10,271 	& -\$5,753	& 13 	& \$273.46	\\ \hline
+        $\sqrt{\text{VWVM}}$    & \$305     & -\$4,889  & 12    & -\$304.42  \\ \hline
+    $\text{VWVM}^2$             & \$610     & -\$3,870  & 6     & -\$381.67  \\ \hline
+    \end{tabular}
 \end{center}
 
 \begin{center}
-  \captionof{table}{Weighted Average R\textsuperscript{2} Detail by Weighting Choice}
-  \label{table:WeightedAvgR2DetailByWeightingChoice}
-  \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c| }
-      \hline
-      \rowcolor{LightGreen}
-      \textbf{Weighting} & \textbf{Min} & \textbf{Max} & \textbf{Average} \\
-      \hline
-      Even  & 0.9997766 & 0.9999738 & 0.9999171 \\ \hline
-      VW 	& 0.9994991 & 0.9999729 & 0.9999084	\\ \hline
-      VWVM  & 0.9989745 & 0.9999594	& 0.9998494 \\ \hline
-  \end{tabular}
+    \captionsetup{hypcap=false}
+    \captionof{table}{TSLA 1/18/19 Smile Profit Detail by Weighting Choice}
+    \label{tab:TSLA_Jan_TwistWeighting}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\ \hline
+        Even                    & \$0    	& -\$2,505  & 11    & -\$154.55	\\ \hline
+        VW 	                    & \$0       & -\$770    & 8	    & -\$88.75	\\ \hline
+        VWVM                    & \$785 	& -\$437	& 6 	& \$25.00	\\ \hline
+        $\sqrt{\text{VWVM}}$    & \$510     & -\$880    & 4     & -\$126.25  \\ \hline
+        $\text{VWVM}^2$         & \$320     & -\$420    & 2     & -\$105.00  \\ \hline
+    \end{tabular}
 \end{center}
 
-\subsection{Choice of Optimization Algorithm}
-\label{subsec:ResultsChoiceOfOptAlgo}
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{NVDA 1/18/19 Smile Profit Detail by Weighting Choice}
+    \label{tab:NVDA_Jan_TwistWeighting}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\ \hline
+        Even                    & \$10,670 	& -\$12,355     & 16    & -\$167.63	\\ \hline
+        VW 	                    & \$50      & -\$6,100      & 8	    & -\$108.45	\\ \hline
+        VWVM                    & \$1,400 	& -\$4,796	    & 8 	&  \$78.78	\\ \hline
+        $\sqrt{\text{VWVM}}$    & \$1,610   & -\$3,445      & 8     & -\$78.52  \\ \hline
+        $\text{VWVM}^2$         & \$1,560   & -\$1,551      & 3     & -\$171.15  \\ \hline
+    \end{tabular}
+\end{center}
 
-\subsection{Choice of Trading Strategy}
-\label{subsec:ResultsChoiceOfTradingStrategy}
+\subsection{Choice of Optimization Algorithm} \label{subsec:ResultsChoiceOfOptAlgo}
+The resulting theoretical values between using the Gauss-Newton and Levenberg-Marquardt algorithms was negligible ($O(10^{-14})$) and thus no end profit and loss difference was observed between the two optimization algorithms under any combination of function, weighting, trading strategy, or dataset.  The question of which algorithm to use, then, just becomes one of efficiency.
+\newpar
+
+
+\subsection{Choice of Trading Strategy} \label{subsec:ResultsChoiceOfTradingStrategy}
 
 \newpage
-\section{Discussion and Conclusion} \label{sec:DiscussionAndConclusion}
+\section{Conclusion} \label{sec:DiscussionAndConclusion}
 
 \subsection{A Note on Rounding}
 
@@ -985,6 +1065,10 @@ Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2His
     \bibitem{Marquardt}
     	Donald Marquardt.
         \textit{An Algorithm for Least-Squares Estimation of Nonlinear Parameters}.  Journal of the Society for Industrial and Applied Mathematics, 11(2): 431-441.
+    
+    \bibitem{Bjorck}
+        A. Bj\"orck.  \textit{Numerical Methods for Least Squares Problems}.
+        SIAM, 1996.
         
 	\bibitem{Gavin}
         Henri P. Gavin.
@@ -993,9 +1077,9 @@ Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2His
         Duke University: Duke, NC, USA, 2011: 1–15.
     
     \bibitem{Natenberg}
-    	Sheldon Natenberg (1994).
+    	Sheldon Natenberg.
         \textit{Option Volatility \& Pricing}.
-        United States of America:  McGraw-Hill.
+        United States of America:  McGraw-Hill, 1994.
     
     \bibitem{Gatheral}
     	Jim Gatheral.
