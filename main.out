@@ -1,0 +1,45 @@
+\BOOKMARK [1][-]{section*.2}{Figures}{}% 1
+\BOOKMARK [1][-]{section*.3}{Tables}{}% 2
+\BOOKMARK [1][-]{section.1}{Preface}{}% 3
+\BOOKMARK [2][-]{subsection.1.1}{A Brief Overview of Financial Derivatives}{section.1}% 4
+\BOOKMARK [2][-]{subsection.1.2}{The Vanilla American Option Contract}{section.1}% 5
+\BOOKMARK [3][-]{subsubsection.1.2.1}{Valuation}{subsection.1.2}% 6
+\BOOKMARK [3][-]{subsubsection.1.2.2}{Basic Trading Strategies}{subsection.1.2}% 7
+\BOOKMARK [3][-]{subsubsection.1.2.3}{The Greeks}{subsection.1.2}% 8
+\BOOKMARK [3][-]{subsubsection.1.2.4}{Volatility}{subsection.1.2}% 9
+\BOOKMARK [3][-]{subsubsection.1.2.5}{Pricing Models}{subsection.1.2}% 10
+\BOOKMARK [2][-]{subsection.1.3}{The Vanilla American Option Volatility Smile}{section.1}% 11
+\BOOKMARK [1][-]{section.2}{Introduction}{}% 12
+\BOOKMARK [1][-]{section.3}{Methods}{}% 13
+\BOOKMARK [2][-]{subsection.3.1}{Market Data Processing}{section.3}% 14
+\BOOKMARK [3][-]{subsubsection.3.1.1}{Collection of Data}{subsection.3.1}% 15
+\BOOKMARK [3][-]{subsubsection.3.1.2}{Converting to Volatility}{subsection.3.1}% 16
+\BOOKMARK [3][-]{subsubsection.3.1.3}{Filtering Methods}{subsection.3.1}% 17
+\BOOKMARK [2][-]{subsection.3.2}{Volatility Smile Parameterizations}{section.3}% 18
+\BOOKMARK [3][-]{subsubsection.3.2.1}{Basic Parameterizations}{subsection.3.2}% 19
+\BOOKMARK [3][-]{subsubsection.3.2.2}{Elasticity Inspired}{subsection.3.2}% 20
+\BOOKMARK [3][-]{subsubsection.3.2.3}{Natural Log Modification to the Elastic Smile Parameterizations}{subsection.3.2}% 21
+\BOOKMARK [3][-]{subsubsection.3.2.4}{Other Parameterization Methods}{subsection.3.2}% 22
+\BOOKMARK [2][-]{subsection.3.3}{Weighting Schemes}{section.3}% 23
+\BOOKMARK [2][-]{subsection.3.4}{Nonlinear Least Squares Optimization}{section.3}% 24
+\BOOKMARK [3][-]{subsubsection.3.4.1}{The Least Squares Problem, in General}{subsection.3.4}% 25
+\BOOKMARK [3][-]{subsubsection.3.4.2}{Gauss-Newton and Levenberg-Marquardt}{subsection.3.4}% 26
+\BOOKMARK [2][-]{subsection.3.5}{Trading Simulations}{section.3}% 27
+\BOOKMARK [3][-]{subsubsection.3.5.1}{Strategies And Scope}{subsection.3.5}% 28
+\BOOKMARK [3][-]{subsubsection.3.5.2}{Risk Exposure And Time Frame}{subsection.3.5}% 29
+\BOOKMARK [2][-]{subsection.3.6}{The C\043 program}{section.3}% 30
+\BOOKMARK [2][-]{subsection.3.7}{Summary of Project Scope}{section.3}% 31
+\BOOKMARK [2][-]{subsection.3.8}{A Visual Example}{section.3}% 32
+\BOOKMARK [1][-]{section.4}{Results and Discussion}{}% 33
+\BOOKMARK [2][-]{subsection.4.1}{Choice of Function Definition}{section.4}% 34
+\BOOKMARK [2][-]{subsection.4.2}{Choice of Weighting Scheme}{section.4}% 35
+\BOOKMARK [2][-]{subsection.4.3}{Choice of Optimization Algorithm}{section.4}% 36
+\BOOKMARK [2][-]{subsection.4.4}{Choice of Trading Strategy}{section.4}% 37
+\BOOKMARK [1][-]{section.5}{Conclusion}{}% 38
+\BOOKMARK [2][-]{subsection.5.1}{A Note on Rounding}{section.5}% 39
+\BOOKMARK [1][-]{section.6}{References}{}% 40
+\BOOKMARK [1][-]{section.7}{Appendices}{}% 41
+\BOOKMARK [2][-]{subsection.7.1}{Construction of the Elastic Smile Parameterizations}{section.7}% 42
+\BOOKMARK [3][-]{subsubsection.7.1.1}{First Order}{subsection.7.1}% 43
+\BOOKMARK [3][-]{subsubsection.7.1.2}{Second Order}{subsection.7.1}% 44
+\BOOKMARK [1][-]{section.8}{Glossary}{}% 45

@@ -12,6 +12,7 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage[hidelinks]{hyperref}
+\usepackage{multirow}
 \onehalfspacing
 
 \usepackage{xcolor,colortbl}
@@ -118,21 +119,21 @@
 \newpage
 \pagenumbering{arabic}
 \section{Preface} \label{sec:Preface}
-This paper is written with the assumption that the reader has prior knowledge or experience with the fundamental mechanics of the Vanilla\footnote{Vanilla here refers to the standard American Option.  Other types of options exists, such as exotic options.  In fact, insurance plans such as for your car or home can be described as a particular type of non-standard option contract.} American Option contract.  For a novice to the world of options and financial derivatives in general, this section should serve to bring the reader up to speed on the basics.  A more complete and in-depth discussion on American vanilla options is beyond the scope of this project, but if more details are desired, Sheldon Natenberg's \textit{Option Volatility \& Pricing}\textsuperscript{\cite{Natenberg}} is a good place to start.  A reader that has prior knowledge of concepts such as option theoretical values, greeks, volatility, and simple trading strategies may choose to skip the sections outlined in this preface and begin directly with the Introduction (section \ref{sec:Introduction}, page \pageref{sec:Introduction}).
+This paper is written with the assumption that the reader has prior knowledge or experience with the basic mechanics of the vanilla American Option contract\footnote{Vanilla here refers to the standard American Option.  Other types of options exists, such as exotic options.  In fact, insurance plans such as for your car or home can be described as a particular type of non-standard option contract.}.  For a novice to the world of options and financial derivatives in general, this preface should serve to bring the reader up to speed on the basics.  A more complete and in-depth discussion on American vanilla options is beyond the scope of this project, but if more details are desired, Sheldon Natenberg's \textit{Option Volatility \& Pricing}\textsuperscript{\cite{Natenberg}} is a good place to start.  A reader with prior knowledge of concepts such as option theoretical values, greeks, volatility, and simple trading strategies may choose to skip the sections outlined in this preface and begin directly with the Introduction on page \pageref{sec:Introduction}.
 \newpar
-Three main phases complete this project.  The first involves the gathering, filtering, smoothing, and general processing of market data into a single set of $(x,y)$ inputs.  These inputs are then fed into multiple nonlinear least-squares optimization processes, each working with different functional forms, weighting schemes, data sets, and optimization algorithms (phase two).  Phase three examines the optimization results both from a mathematical perspective and through the eyes of an active trader that must apply theory to practice.
+Three main phases complete this project.  The first involves the gathering, filtering, smoothing, and general processing of market data into a single set of $(x,y)$ inputs at many points throughout a trading day.  These inputs are then fed into multiple nonlinear least-squares optimization processes, each working with different functional forms, weighting schemes, data sets, and optimization algorithms (phase two).  Phase three examines the optimization results both from a mathematical perspective and through the eyes of an active trader who must apply theory to practice.
 
 \subsection{A Brief Overview of Financial Derivatives}
 In today's world, there are a lot of different trades that one can make.  Beyond the common and simple purchase or sale of an underlying asset (such as a stock), a handful of special types of contracts called derivatives also exist.  The name `derivative' comes from the fact that the contracts derive their value from the performance of the underlying asset.  In its most basic form, a derivative is a contract between two parties that specify conditions under which a decided upon form of payment is to be made.  Conditions can include stipulations such as contract expiration dates, values and definitions of the underlying variables, and notational amount.
 \newpar
-There are two main groups of financial derivatives: Over the Counter (OTC) and Exchange-Traded Derivatives (ETD).  Some types of OTC derivative contracts include swaps, forward rate agreements, and exotic options (options on vanilla options, for example).  An OTC derivative contract is one that is traded and privately negotiated without going through an exchange or intermediary.  ETD contracts include ones such as vanilla options or futures, and are traded through an exchange.  The scope of this project covers only the ETD contracts categorized as Vanilla American Options.
+There are two main groups of financial derivatives: Over the Counter (OTC) and Exchange-Traded Derivatives (ETD).  Some types of OTC derivative contracts include swaps, forward rate agreements, and exotic options (options on vanilla options, for example).  An OTC contract is one that is traded and privately negotiated without going through an exchange or intermediary.  ETD contracts include ones such as vanilla options or futures, and are traded through an exchange.  The scope of this project covers only the ETD contracts categorized as American Options.
 \newpar
-One of the largest option exchanges today is the Chicago Board of Options Exchange (CBOE).  Historically, exchange-traded derivatives were primarily traded on a trading floor.  While the CBOE trading floor still exists and is still used, most of the trading is now electronically done - traders make trades on the exchange either through automated computer algorithms or through manual click-trading through software.
+One of the largest option exchanges today is the Chicago Board of Options Exchange (CBOE).  Historically, exchange-traded derivatives were primarily traded on a trading floor.  While the CBOE trading floor still exists and is still used, most of the trading is now done electronically - traders make trades on the exchange either with automated computer algorithms or by manually click-trading through software.
 
 \subsection{The Vanilla American Option Contract}
-Vanilla options are exchange-traded contracts that give the owner the right, but not the obligation, to buy or sell a specified amount of an underlying asset.  The contract stipulations also include an expiration date and a decided upon fixed sale price called the \textit{strike} (or exercise) price.  There are two major styles of exchange-traded, vanilla options:  American and European.  For the European Option, the owner has the right (not the obligation) to execute the contract on, but \underline{\textbf{not before}} the contract expiration date.  In the case of the American Option, the owner has the right (not the obligation) to execute the contract on \underline{\textbf{or before}} the contract expiration date.  It is the `execute anytime before expiration' property of American Options that can render the derivative much more difficult to model.  For options on American Equities, the typical amount of underlying asset is 100 shares per option contract\footnote{There are also `mini' American Options that only involve 10 shares of the underlying asset.}.  When an option is executed, all debts must be paid immediately and in full - any profits or losses are unrealized until the position is liquidated.
+Vanilla options are exchange-traded contracts that give the owner the right, but not the obligation, to buy or sell a specified amount of an underlying asset.  The contract stipulations also include an expiration date and a decided upon fixed sale price called the \textit{strike} (or exercise) price.  There are two major styles of exchange-traded options:  American and European.  For the European Option, the owner has the right (not the obligation) to execute the contract on, but \underline{\textbf{not before}} the contract expiration date.  In the case of the American Option, the owner has the right (not the obligation) to execute the contract on \underline{\textbf{or before}} the contract expiration date.  It is the `execute anytime before expiration' property of American Options that can render the derivative much more difficult to model.  For options on American Equities, the typical amount of underlying asset is 100 shares per option contract\footnote{There are also `mini' American Options that only involve 10 shares of the underlying asset.}.  When an option is exercized, all debts must be paid immediately and in full - any profits or losses are instantly realized.
 \newpar
-For both American and European Option contract styles, there are two contract types: Calls and Puts.  An American Call Option gives the right to buy (or take a \textit{long} market position in) a given asset at a fixed price (called the \textit{strike} price) at or before a specified date, or \textit{expiration}.  An American Put Option gives the owner the right to sell (or take a \textit{short} market position in) a given asset at a \textit{strike} price at or before the \textit{expiration} date.  The scope of this paper covers only that of American Options, but the European Option contract types are identical to their American counterparts except for the fact that, as the owner of a European Option, you cannot execute the contract before the expiration date, while the owner of an American Option can choose to execute at any time before contract expiration.
+For both American and European Option contract styles, there are two contract types: Calls and Puts.  An American Call Option gives the owner the right to buy (or take a \textit{long} market position in) a given asset at a fixed price (called the \textit{strike} price) at or before a specified date, or \textit{expiration}.  An American Put Option gives the owner the right to sell (or take a \textit{short} market position in) a given asset at a \textit{strike} price at or before the \textit{expiration} date.  The scope of this paper covers only that of American Options, but the European Options are identical to their American counterparts except for the fact that, as the owner of a European Option, you cannot execute the contract before the expiration date.  The owner of an American Option may choose to exercize their right at any time before contract expiration.
 \newpar
 The quantity of option contracts available on an exchange can be a staggering amount for those not accustomed to working with options on a day-to-day basis.  In February 2017 on the CBOE, there were as many as 11 expiration dates available for option contracts on the American equity AAPL, with some expirations having 100 strikes or more.  This meant that during this time, an option trader trading AAPL had as many as 2200 Call or Put options to choose from for just the one asset.  An option trader looking at the stock ticker SPY\footnote{SPY is the SPDR S\&P 500 ETF Trust.  Its value follows the actual S\&P 500 Index.  SPY is traded on the NYSEARCA exchange.} on the CBOE would be able to choose from as many as 14 expiration dates, each containing as many as 200 strikes or more, giving the trader over 5600 option contracts to choose from for SPY alone.  A typical trading desk with a single primary trader can be responsible for options on as many as 30 or more underlying assets simultaneously.  To help work with and make sense of all that information, the option contracts are grouped by underlying asset by expiration, but even then making trading decisions can be difficult.
 
@@ -141,7 +142,7 @@ An option contract itself comes with a price tag for the buyer.  Called the opti
 \newpar
 The intrinsic value is the amount that a trader would make should he or she exercise the option and then immediately close out the corresponding underlying position at the current market price.  For example, suppose an underlying asset is trading at \$100.  Then the owner of the \$90 call could exercise the option and as a result own 100 shares at \$90 per share.  But, since the current price of the underlying asset is \$100, the trader could immediately close out the underlying position and net \$10 per share from the entire transaction.  Therefore the intrinsic value for the \$90 call in this example is \$10.
 \newpar
-A call will only have intrinsic value if its strike (or exercise) price is less than the current market price of the underlying asset.  Similarly, a put will only have intrinsic value if its strike (or exercise) price is greater than the current underlying price.  Intrinsic value cannot be less than zero by definition.  In simple mathematical terms,
+A call will only have intrinsic value if its strike price is less than the current market price of the underlying asset.  Similarly, a put will only have intrinsic value if its strike price is greater than the current underlying price.  Intrinsic value cannot be less than zero by definition.  In simple mathematical terms,
 \begin{equation*}
 	\begin{split}
 		\text{Call Intrinsic Value} = \max(AssetMarketPrice - Strike, 0) \\
@@ -151,10 +152,10 @@ A call will only have intrinsic value if its strike (or exercise) price is less 
 
 An option which has positive intrinsic value is referred to as an \textit{in-the-money} option by the amount of the intrinsic value, while an option which has no intrinsic value is said to be an \textit{out-of-the-money} option.  An out-of-the money option premium can be attributed solely to its extrinsic, or time value.  The extrinsic value is the value of the option premium due to factors such as time to expiration and volatility.
 \newpar
-An option is referred to as \textit{at-the-money} if it has an exercise price that is equivalent to the forward price of the underlying asset (that is, the price of the asset upon expiration date given today's price, rate, and dividends).  An at-the-money option has no intrinsic value and is thus technically out-of-the-money.  In fact, an at-the-money option premium carries the greatest amount of time value and is usually heavily traded.
+An option is referred to as \textit{at-the-money} if it has an exercise price that is equivalent to the forward price of the underlying asset (that is, the expected future price of the asset at expiration given today's price, rate, and dividends).  An at-the-money option has no intrinsic value and is thus technically out-of-the-money.  In fact, an at-the-money option premium carries the greatest amount of time value and is usually heavily traded.
 
 \subsubsection{Basic Trading Strategies}\label{sec:BasicTradingStrategies}
-Any simple or complex option trading strategy that a trader employs is made up of some combination of calls and/or puts.  To aid in understanding each trading strategy, it is helpful to first analyze the consequences of buying or selling an individual option in terms of potential profit and loss (P\&L)\footnote{A typical purchase or sale of an option is usually met with a corresponding trade in the actual underlying asset.  This corresponding trade is called a hedge, and is done in a way so that the option position remains neutral to small changes in the underlying asset.  Hedges can come in many shapes and forms and are often updated constantly as the price of the underlying asset changes.  Indeed, some may even choose to hedge an option trade with other option trades.}.
+Any option trading strategy that a trader employs is made up of some simple or complex combination of calls and/or puts.  To aid in understanding each trading strategy, it is helpful to first analyze the consequences of buying or selling an individual option in terms of potential profit and loss (P\&L)\footnote{A typical purchase or sale of an option is usually met with a corresponding trade in the actual underlying asset.  This corresponding trade is called a hedge, and is done in a way so that the option position remains neutral to small changes in the underlying asset.  Hedges can come in many shapes and forms and are often updated constantly as the price of the underlying asset changes.  Indeed, some may even choose to hedge an option trade with other option trades.}.
 \newpar
 Suppose a trader is looking at an option board for some underlying asset on the CBOE.  In particular, suppose he or she is looking at an expiration that offers the following options:
 %	Note that the table column colors may appear to overwrite some of the table vertical lines, however the table will look fine in the actual PDF.
@@ -177,7 +178,7 @@ Suppose a trader is looking at an option board for some underlying asset on the 
       \hline
   \end{tabular}
 \end{center}
-For this example underlying asset and expiration date, the CBOE is offering strikes from 155 to 185 in steps of five dollars\footnote{Note that it is not always the case that strikes are evenly spaced apart.  In many cases the strikes alternate in spacing, or even change completely, usually depending on how far the strike is from the current underlying price.}.
+For this example underlying asset and expiration date, the CBOE is offering strikes from 155 to 185 in increments of five dollars\footnote{Note that it is not always the case that strikes are evenly spaced apart.  In many cases the strikes alternate in spacing, or even change completely, usually depending on how far the strike is from the current underlying price.}.
 \newpar
 Now, suppose a trader wants to buy the 170 Call.  To make this trade, the trader must pay the current market ask (or offer) price for the option.  From the option board in Table \ref{table:ExampleOptionBoard}, buying the 170 Call will incur a premium\footnote{Recall that a standard American Option contract involves 100 shares of the underlying asset.  This means that if the price of the option is \$8.10, then the total cost to buy the option is actually \$810} cost of \$8.10.  This means that the trader will break even if the underlying asset reaches \$178.10.  If the underlying asset becomes \$170 or less, the option will expire worthless and the trader will lose the entire \$8.10 premium paid.  If the underlying asset becomes greater than \$178.10, the trader will net a profit equal to the underlying price less \$178.10.
 \newpar
@@ -569,8 +570,7 @@ For the outlines of both optimization algorithms, we define the following:
 
 \textbf{\underline{The Gauss-Newton Algorithm}}
 \newline
-CHANGE
-The Gauss-Newton method presumes that the objective function is locally quadratic (approximately) in the parameters near the optimal solution\textsuperscript{\cite{Bjorck}}.  From \cite{Gavin}, the step vector at each step for for the Gauss-Newton method can be found by solving 
+From \cite{Gavin}, the step vector at each step for for the Gauss-Newton method can be found by solving 
 \begin{equation}
     (J^T W J) \pmb{\eta} = J^T W (\pmb{\sigma} - \pmb{f}(\lambdaVect))
 \end{equation}
@@ -645,7 +645,7 @@ The end goal of this project is to show that the best parameterization of a vola
 
 \subsubsection{Strategies And Scope}
 \label{subsec:TradingStrategiesAndScope}
-A handful of simple trading strategies are included in the analysis program, each based on the concept of trading edge.  In this project, trading edge is defined as the dollar difference between an option's theoretical value and the corresponding bid or ask market price.  For example, suppose we find an option that has a market bid price of \$0.85 and ask price of \$1.10.  If we evaluate the option's theoretical value to be \$1.00, then we say the theoretical value has 15 cents of edge with respect to the bid price and 10 cents of edge with respect to the ask price.  If the theoretical value fell below the market bid price or above the market ask price, it is said to have `crossed' the market and thus will have a negative edge.
+A handful of simple trading strategies are included in the analysis program, each looks just at a single option at a time and each is based on the concept of trading edge.  We define \textit{trading edge} as the dollar difference between an option's theoretical value and the corresponding bid or ask market price.  For example, suppose an option has a market bid price of \$0.85 and a market ask price of \$1.10.  If the option's theoretical value is evaluated to be \$1.00, then we say the theoretical value has 15 cents of edge with respect to the bid price and 10 cents of edge with respect to the ask price.  If the theoretical value fell below the market bid price or above the market ask price, it is said to have `crossed' the market and thus will have a negative edge.
 \newpar
 It is possible to encounter situations where there isn't as much trading size as one would like to trade.  For example, if only four contracts are available for a particular side of the market, then clearly one cannot trade more than four on that line.  Some real-world trading strategies may also take into account the size available when determining whether or not to make a trade.  This type of analysis - trading based on available market size - is left out of this project.  In an effort to keep things simple, all trading algorithms utilized in this project will trade only a single option contract at a time.  In other words, a goal trading size of one.
 \newpar
@@ -849,23 +849,26 @@ It should be clear from the previous plots that some parameterizations are very 
 
 \newpage
 \section{Results and Discussion} \label{sec:Results}
-Even after trimming the total possible scope down significantly, there are still many moving parts in this project\footnote{Removed parts include, but are not limited to:  hedging, near earnings move analysis, exchange and trading fees, other option pricing models, other closed-form and non closed-form volatility smile models, market data speed (maybe we are too slow to get on a trade or off a trade that we want), other trading strategies that involve market-making or inter-expiration trading, profit and loss beyond a single trading day, alternate stocks that have dividends, significantly positive or negative interest rates}.  Each moving part is individually isolated and analyzed to illustrate the mathematical and practical implications that arise for a given choice made at each step in the entire process.  All results presented here are those arbitrarily taken from experiments conducted on a single trading day:  February 12\textsuperscript{th}, 2018.
+Even after trimming the total possible scope down significantly, there are still many moving parts in this project\footnote{Removed parts include, but are not limited to:  hedging, near earnings move analysis, exchange and trading fees, other option pricing models, other closed-form and non closed-form volatility smile models, market data speed (maybe we are too slow to get on a trade or off a trade that we want), other trading strategies that involve market-making or inter-expiration trading, profit and loss beyond a single trading day, alternate stocks that have dividends, significantly positive or negative interest rates}.  Each moving part is individually isolated and analyzed to illustrate the mathematical and practical implications that arise for a given choice made at each step in the entire process.
 \newpar
 Unless otherwise specified, any results presented here are those from simulations conducted with the Gauss-Newton algorithm (\ref{subsubsec:GNLM}), vol width vega multiplier weighting (\ref{sec:WeightingSchemes}), the tiny percent edge trader (\ref{subsec:TradingStrategiesAndScope}), one minute trading intervals, and risk bounds between -1000 and 1000 deltas (\ref{subsec:RiskExposureAndTimeFrame}).
 \newpar
-Section \ref{subsec:ResultsChoiceOfFunc} shows the mathematical and practical implications of parameterization choice, \ref{subsec:ResultsChoiceOfWeight} illustrates the affects of a choice in weighting scheme, \ref{subsec:ResultsChoiceOfOptAlgo} presents observed differences when using the Gauss-Newton or Levenberg-Marquardt optimization algorithms, and finally \ref{subsec:ResultsChoiceOfTradingStrategy} shows the performance of different trading strategies.  All assessments are done over three data sets taken on February 12\textsuperscript{th}, 2018:  TSLA options expiring on 3/16/18 and 1/18/19, and NVDA options expiring on 1/18/19.
+Section \ref{subsec:ResultsChoiceOfFunc} shows the mathematical and practical implications of parameterization choice, \ref{subsec:ResultsChoiceOfWeight} illustrates the affects of a choice in weighting scheme, \ref{subsec:ResultsChoiceOfOptAlgo} presents observed differences when using the Gauss-Newton or Levenberg-Marquardt optimization algorithms, and finally \ref{subsec:ResultsChoiceOfTradingStrategy} shows the performance of different trading strategies.  All analysis is performed using three data sets taken on February 12\textsuperscript{th}, 2018:  TSLA options expiring on 3/16/18 and 1/18/19, and NVDA options expiring on 1/18/19.
 \newpar
-When comparing chosen model functions from a mathematical standpoint, the coefficient of determination ($R^2$) was used heavily to compare the `goodness of fit' between parameterization choices.  The reasoning here was driven by the need to find a standardized measure of optimization that could then be cross-compared against the resulting profit and loss from the trading simulations.  In other words, we wanted to see if better $R^2$ measures (those closest to 1) provided more positive portfolios.
+When comparing chosen model functions from a mathematical standpoint, the coefficient of determination ($R^2$) was used heavily to compare the `goodness of fit' between parameterization choices.  The reasoning here was driven by the need to find a standardized measure of optimization that could then be cross-compared against the resulting profit and loss from the trading simulations.  In other words, we wanted to see if models generating better $R^2$ measures (those closer to 1) provided more positive portfolios.
 \newpar
-The concepts of `realized' and `unrealized' positions were utilized to assess the performance of a trading simulation over the course of the trading day.  The realized position is simply the current cash position caused by buying or selling options.  The unrealized position represents the amount it would cost to liquidate all open positions based on a snapshot of market prices.  The unrealized and realized position were recalculated for each trading interval, after the trading simulation ran and.  The sum of these two types of positions provided the end performance measure - it represents the amount of cash one would walk away with should the decision be made to liquidate all open positions immediately while also taking into account the amount of capital put forward to arrive at such an option position.
+The concepts of `realized' and `unrealized' positions were utilized to assess the performance trading simulations over the course of the trading day.  The `realized' position is simply the current cash position caused by buying or selling options.  The `unrealized' position represents the amount it would cost to liquidate all open positions based on a snapshot of market prices.  The unrealized and realized positions were recalculated at each trading interval, after the trading simulation ran.  The sum of these two types of positions provides the end performance measure - it represents the amount of cash one would walk away with should the decision be made to liquidate all open positions immediately while also taking into account the amount of capital put forward to arrive at such a position.
 
 \subsection{Choice of Function Definition}\label{subsec:ResultsChoiceOfFunc}
-The choice in parameterization had the clearest affect on the trading simulation profit or loss.  It should not be surprising that a bad choice in function model can result in even worse theoretical values, but a more quantitative result is presented here.  In fact, the profit or loss differences were so stark in some cases that it was impossible to gain any useful information when they were all plotted together on a single plot.  Thus, figures \ref{fig:TSLA_Mar_LinQuadElast}, \ref{fig:TSLA_Jan_LinQuadElast}, and \ref{fig:NVDA_Jan_LinQuadElast} show the profit and loss results for trading simulations running off of the linear, quadratic and elastic parameterizations, while figures \ref{fig:TSLA_Mar_SmileTwist}, \ref{fig:TSLA_Jan_SmileTwist} show the results of those running off of quadratic, smile, and twist parameterizations.  Further detail is presented in tables \ref{table:TSLA_Mar_FuncChoiceProfitDetail}, \ref{table:TSLA_Jan_FuncChoiceProfitDetail}, and \ref{table:NVDA_Jan_FuncChoiceProfitDetail}.  All optimizations presented here were performed with the VWVM weighting style and all trading simulations were done with the Tiny \%-Edge trader.
+For all of the following results presented in this section, the simulation frequency, weighting style, optimization algorithm, and trading algorithm are all held constant\footnote{one-minute intervals, VWVM, Gauss-Newton, and Tiny \%-Edge respectively}.  The only change between simulations was the model choice.
+\newpar
+For TSLA 3/16/18, the following profit or loss was observed after each simulation run for each model choice:
 
 \img{P\&L for TSLA 3/16/18 Linear, Quadratic, Elastic Parameterizations}{TSLA_Mar_LinQuadElast}{fig:TSLA_Mar_LinQuadElast}
 
 \img{P\&L for TSLA 3/16/18 Smile, Twist Parameterizations}{TSLA_Mar_SmileTwist}{fig:TSLA_Mar_SmileTwist}
 
+The table below shows additional detail, including the number of trades made and the average profit per trade after the 2:59 PM simulation.
 \begin{center}
     \captionsetup{hypcap=false}
     \captionof{table}{TSLA 3/16/18 Profit Detail by Parameterization Choice}
@@ -880,6 +883,8 @@ The choice in parameterization had the clearest affect on the trading simulation
         Twist 	    & \$10,271 	& -\$5,753	& 13	&  \$273.46	\\ \hline
     \end{tabular}
   \end{center}
+
+For TSLA 1/18/19, the results observed after each simulation run for each model choice were:
 
 \img{P\&L for TSLA 1/18/19 Linear, Quadratic, Elastic Parameterizations}{TSLA_Jan_LinQuadElast}{fig:TSLA_Jan_LinQuadElast}
 
@@ -900,6 +905,7 @@ The choice in parameterization had the clearest affect on the trading simulation
     \end{tabular}
 \end{center}
 
+Finally, results for NVDA 1/18/19 are shown below:
 \img{P\&L for NVDA 1/18/19 Linear, Quadratic, Elastic Parameterizations}{NVDA_Jan_LinQuadElast}{fig:NVDA_Jan_LinQuadElast}
 
 \img{P\&L for NVDA 1/18/19 Smile, Twist Parameterizations}{NVDA_Jan_SmileTwist}{fig:NVDA_Jan_SmileTwist}
@@ -919,7 +925,7 @@ The choice in parameterization had the clearest affect on the trading simulation
     \end{tabular}
 \end{center}
 
-For visual representations of when trades are actually happening, the following six figures show the profit and lost for smile and twist for each of the three expirations previously presented (TSLA 3/16/18 and 1/18/19 and NVDA 1/18/19):
+To illustrate when trades are actually happing, the following six figures show the profit and lost for Smile and Twist for each of the three expirations previously presented (TSLA 3/16/18 and 1/18/19 and NVDA 1/18/19) with trade points marked in vertical dotted red lines:
 
 \img{TSLA 3/16/18 Smile Profit Detail With Trades}{TSLA_Mar_SmileWithTrades}{fig:TSLA_Mar_SmileWithTrades}
 
@@ -932,6 +938,7 @@ For visual representations of when trades are actually happening, the following 
 \img{NVDA 1/18/19 Smile Profit Detail With Trades}{NVDA_Jan_SmileWithTrades}{fig:NVDA_Jan_SmileWithTrades}
 
 \img{NVDA 1/18/19 Twist Profit Detail With Trades}{NVDA_Jan_TwistWithTrades}{fig:NVDA_Jan_TwistWithTrades}
+
 
 Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2Hist},
 \ref{fig:SmileR2Hist}, \ref{fig:TwistR2Hist} show the distribution of unweighted $R^2$ values for each parameterization choice over all optimizations\footnote{Totaling $390 \times 3 = 1,170$ optimization runs} for all three expirations presented here throughout the simulation day.
@@ -948,12 +955,12 @@ Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2His
 
 \subsection{Choice of Weighting Scheme}
 \label{subsec:ResultsChoiceOfWeight}
-Weighting also had significant impact on the trading simulation's profit or loss.  For the Smile function choice, profit and loss details when different weighting schemes are applied are shown in tables \ref{tab:TSLA_Mar_SmileWeighting}, \ref{tab:TSLA_Jan_SmileWeighting}, and \ref{tab:NVDA_Jan_SmileWeighting}.
+Weighting also had significant impact on the trading simulation's profit or loss.  In particular for the Smile function choice, profit and loss details when different weighting schemes are applied (and all other factors unchanged) are shown in tables \ref{tab:TSLA_Mar_SmileWeighting}, \ref{tab:TSLA_Jan_SmileWeighting}, and \ref{tab:NVDA_Jan_SmileWeighting}.
 
 \begin{center}
     \captionsetup{hypcap=false}
     \captionof{table}{TSLA 3/16/18 Smile Profit Detail by Weighting Choice}
-    \label{tab:TSLA_Mar_SmileWeighting}
+    \label{tab:`TSLA_Mar_SmileWeighting}
     \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
         \hline \rowcolor{LightGreen}
         \textbf{Weighting} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Average At Close} \\ \hline
@@ -995,7 +1002,7 @@ Weighting also had significant impact on the trading simulation's profit or loss
     \end{tabular}
 \end{center}
 
-Tables \ref{tab:TSLA_Mar_TwistWeighting}, \ref{tab:TSLA_Jan_TwistWeighting}, and \ref{tab:NVDA_Jan_TwistWeighting} show the affect of weighting choice on profit and loss when modelling with the Twist function.
+Tables \ref{tab:TSLA_Mar_TwistWeighting}, \ref{tab:TSLA_Jan_TwistWeighting}, and \ref{tab:NVDA_Jan_TwistWeighting} below show the affect of weighting choice on profit and loss when modelling with the Twist function.
 
 \begin{center}
     \captionsetup{hypcap=false}
@@ -1043,11 +1050,86 @@ Tables \ref{tab:TSLA_Mar_TwistWeighting}, \ref{tab:TSLA_Jan_TwistWeighting}, and
 \end{center}
 
 \subsection{Choice of Optimization Algorithm} \label{subsec:ResultsChoiceOfOptAlgo}
-The resulting theoretical values between using the Gauss-Newton and Levenberg-Marquardt algorithms was negligible ($O(10^{-14})$) and thus no end profit and loss difference was observed between the two optimization algorithms under any combination of function, weighting, trading strategy, or dataset.  The question of which algorithm to use, then, just becomes one of efficiency.
+The differences in the resulting theoretical values between using the Gauss-Newton or Levenberg-Marquardt algorithms were negligible\footnote{Approximately on the order of $10^{-14}$}.  Thus, no end profit and loss difference was observed between the two optimization algorithms under any combination of function, weighting, trading strategy, or dataset.  The question of which algorithm to use, then, just becomes one of efficiency.
 \newpar
+So long as the Levenberg-Marquardt algorithm (as implemented in \ref{subsubsec:GNLM}) at each step results in a decreased sum of least-squares from the previous step, then the efficiency differs from Gauss-Newton only by a single matrix addition and one operation to read the diagonal from a matrix.  If, however, the Levenberg-Marquardt parameter $\kappa$ must be adjusted, i.e if the sum of least squares has increased from the previous step, then at \textit{minimum} one additional matrix solve must be performed before continuing to the next step.  Therefore when evaluating the efficiency of the Levenberg-Marquardt algorithm one must also be aware of the number of additional matrix solves that were computed in a single step - looking at only the raw number of steps can be misleading as to how much work was actually performed in completing the optimization task.  This issue does not exist with the Gauss-Newton algorithm as there is just a single matrix solve per step counted.
+\newpar
+Given identical initial values $\lambdaVect_0$ for the parameter vector, the average of results between all three datasets for optimizations occuring over the single test day are summarized in table \ref{tab:OverallAlgoEfficiency}.
 
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{Overall Optimization Algorithm Efficiency}
+    \label{tab:OverallAlgoEfficiency}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Model \& Algo} & \textbf{Avg \# Steps} & \textbf{Avg \# Matrix Solves} \\ \hline
+        Smile GN    &   4.39    &   4.39 \\ \hline
+        Smile LM    &   5.36    &   5.42 \\ \hline
+        Twist GN    &   4.34    &   4.34 \\ \hline
+        Twist LM    &   7.87    &   7.87 \\ \hline  
+    \end{tabular}
+\end{center}
 
 \subsection{Choice of Trading Strategy} \label{subsec:ResultsChoiceOfTradingStrategy}
+The profit and loss results presented in previous sections \ref{subsec:ResultsChoiceOfFunc}, \ref{subsec:ResultsChoiceOfOptAlgo}, and \ref{subsec:ResultsChoiceOfWeight} were computed using an arbitrarily chosen trading strategy.  This strategy will only make trades when the resulting theoretical value is within 2.5\% of the market width from either the bid or ask price (if safeties allow it).
+\newpar
+Obviously this strategy may not always be the best one to imploy - 2.5\% may not be the most optimal edge zone to make trades.  The question to answer then is, at what distance between the theoretical value and the market price should a trade be considered?  To assess this, trading simulations were run at half-percent edge intervals from $-15\%$ edge to $+15\%$ edge.  This means that individual simulations were run with allowable trading edge set to each of the ranges of $[-15\%,-14.5\%), [-14.5\%,-14\%), \cdots , [14.5\%,15\%]$.  An example end-of-day profit and loss result for Smile is shown in Figure \ref{fig:TSLA_Mar_Smile_ZonePnL}, and for Twist in Figure \ref{fig:TSLA_Mar_Twist_ZonePnL}.
+
+\img{TSLA 3/16/18 Smile Profit By Edge Zone}{TSLA_Mar_Smile_ZonePnL}{fig:TSLA_Mar_Smile_ZonePnL}
+
+\img{TSLA 3/16/18 Twist Profit By Edge Zone}{TSLA_Mar_Twist_ZonePnL}{fig:TSLA_Mar_Twist_ZonePnL}
+
+After assessing all the half-percent zones for each dataset using either the Smile or Twist models, it was possible to then assess the best, worst trading zones.  Results are summarized in Tables \ref{tab:SmileBestAndWorstEdgeZones} and \ref{tab:TwistBestAndWorstEdgeZones}.  Additionally, a `practical' trading zone was determined and is show in the following tables.  The thought process is this:  in a trading environment, one isn't realistically going to be able to cherry pick the best trading zones to trade in.  In practice, a starting point will be used and then edge will be determined from there.  In this case, we started with a zero edge and then continued expanding the edge range to maximize profits. 
+
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{Smile Best and Worst Trading Zones}
+    \label{tab:SmileBestAndWorstEdgeZones}
+    \begin{tabular}{ |c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Dataset} & \textbf{Type}  & \textbf{Edge Zone (\%)} & \textbf{End of Day Profit} \\ \hline
+        \multirow{3}{*}{TSLA 3/16/18}
+        &   Best       &   0-0.005     &   \$5,350     \\
+        &   Worst      &   0.115-0.12  &   -\$14,520   \\
+        &   Practical  &   0-0.035     &   \$7,959     \\ \hline
+        \multirow{3}{*}{TSLA 1/18/19}
+        &   Best       &   0.1-0.105   &   \$7,815     \\ 
+        &   Worst      &   0.11-0.115  &   -\$17,660   \\ 
+        &   Practical  &   0-0.01      &   \$2,760     \\ \hline
+        \multirow{3}{*}{NVDA 1/18/19}
+        &   Best       &   0-0.01      &   \$1,160     \\ 
+        &   Worst      &   0.125-0.13  &   -\$27,365   \\ 
+        &   Practical  &   -0.005-0.04 &   \$2,236     \\ \hline
+    \end{tabular}
+\end{center}
+
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{Twist Best and Worst Trading Zones}
+    \label{tab:TwistBestAndWorstEdgeZones}
+    \begin{tabular}{ |c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Dataset} & \textbf{Type}  & \textbf{Edge Zone (\%)} & \textbf{End of Day Profit} \\ \hline
+        \multirow{3}{*}{TSLA 3/16/18}
+        &   Best       &  0.065-0.07   &   \$6,790      \\
+        &   Worst      &  0.145-0.15   &   -\$21,236    \\
+        &   Practical  &  0-0.07       &   \$6,486      \\ \hline
+        \multirow{3}{*}{TSLA 1/18/19}
+        &   Best       &  0.14-0.145   &   \$2,415      \\
+        &   Worst      &  0.125-0.13   &   -\$7,070     \\
+        &   Practical  &  -0.005-0.095 &   \$2,532      \\ \hline
+        \multirow{3}{*}{NVDA 1/18/19}
+        &   Best       &  -0.01--0.005 &   \$460        \\
+        &   Worst      &  0.115-0.12   &   -\$35,715    \\
+        &   Practical  &  0-0.005      &   \$54         \\ \hline
+    \end{tabular}
+\end{center}
+
+Looking at all the determined practical trading ranges together, if a trader was looking for a `catch-all' edge zone for the Smile model, then the findings here indicate the best range to make trades is only when the theoretical value falls between \$0\% and \$0.005\% of the market width.  If one employed this strategy for the three datasets, then the profit and loss over the course of the day would have looked like figure \ref{fig:SmileOptimalPnL}:
+
+\img{Optimal Edge Zone Smile P\&L}{SmileOptimalPnL}{fig:SmileOptimalPnL}
+
+With the optimal edge range being employed, the observed lowest loss was -\$6,310 and the highest gain was \$16,237, with an end of day profit of \$8,232.
 
 \newpage
 \section{Conclusion} \label{sec:DiscussionAndConclusion}
@@ -1210,8 +1292,10 @@ as given in equation \ref{SecondOrderSmile}.
 \newline \newline
 \textbf{Strike Price}: The price or exercise price at which the underlying asset will be delivered should the holder of the option choose to exercise his or her right to buy or sell.
 \newline \newline
-\textbf{Time Value}: The option premium less the intrinsic value.  Equivalent to \textit{Extrinsic Value}
+\textbf{Time Value}: The option premium less the intrinsic value.  Equivalent to \textit{Extrinsic Value}.
 \newline \nolinebreak
-\textbf{Vanilla Option}: A normal call or put option that has no special or unusual features
+\textbf{Trading Edge}: The dollar difference between an option's theoretical value and the corresponding bid or ask market price.
+\newline \nolinebreak
+\textbf{Vanilla Option}: A normal call or put option that has no special or unusual features.
 
 \end{document}
