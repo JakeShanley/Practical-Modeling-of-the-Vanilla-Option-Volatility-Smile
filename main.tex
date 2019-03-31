@@ -409,12 +409,12 @@ For each underlying asset, data collected includes:
         \item	The carry and premium rates for each expiration, chosen to best `line up'\footnote{`line up' here comes from the theory that the at-the-money call and put prices must be equivalent.  Thus, it is possible to find a carry rate that best makes the at-the-money call and put theoretical values equal.  There are some cases where the trader will intentionally choose an incorrect carry rate in order to help drive his algorithms to develop a particular position.} the option board.
         \item	Time to expiration that accounts for trading time and holidays.
     \end{enumerate}
-
+    
 \subsubsection{Converting to Volatility}\label{sec:ConvertingToVol}
 A proprietary variation of a trinomial lattice based option pricing model was chosen for this project.  This was done for two reasons: to ensure accuracy and direct applicability of the results to the trading paradigms of my current employer, and because writing an American Option pricing model from scratch is beyond the scope of this project.  To convert to and from option theoretical value and volatility, this particular model requires the inputs of strike, option type (put or call), time to expiration (in years), price of the underlying asset (here, the NBBO midpoint was used), the expiration's carry and premium rates, and dividends (if any).
 
 \subsubsection{Filtering Methods}\label{sec:FilteringMethods}
-Once the four sets of call bid, call ask, put bid, and put ask implied volatility (IV) per strike per expiration were obtained, a significant amount of filtering and processing is required to produce a single set of strike-volatility data points.  This filtering process utilized three software algorithms:
+Once the four sets of call bid, call ask, put bid, and put ask implied volatility (IV) per strike per expiration were obtained, a significant amount of filtering and processing is required to produce a single set of strike-volatility data points.  This filtering process utilized three algorithms:
 
 \begin{enumerate}
 	\item \textbf{GetBestBidAskIvMarket}:  This method converts the four-fold dataset of (Strike, CallBidIv, CallAskIv, PutBidIv, PutAskIv) into the two fold (Strike, BidIv, AskIv), an option type-independent dataset.  ``Best'' here is defined as the IV which yields the BidIv and AskIv pair which are closest to eachother, i.e the `tightest' market.  This method uses the algorithms AdjustRawBidIvs and AdjustRawAskIvs.  Additionally it prevents strikes that have sparse data or volatility calculation errors from being included in the input data that is passed to the optimization algorithm.
@@ -484,6 +484,7 @@ with $\sigma_f$, $\mathbb{S}$, $\mathbb{C}_l$ (Left Curvature), and $\mathbb{C}_
 with $\sigma_f$, $\mathbb{S}$, $\mathbb{C}_l$, and $\mathbb{C}_r$, $\mathbb{T}_l$ (Left Twist), and $\mathbb{T}_r$ (Right Twist) as parameters.
 
 \subsubsection{Natural Log Modification to the Elastic Smile Parameterizations}
+\label{subsec:NatLogElasticMod}
 A keen mathematical mind may notice that the first, second, and third order elastic smile parameterizations may have poor numerical properties.  In particular, it is usually the case that $\mathbb{S} \approx 1$ and $n(k)$ to be quite large - on the order of 1000 or more in many cases.  For the $\mathbb{C}_l$ and $\mathbb{C}_r$ parameters, the poor numerical properties are even further exacerbated since we raise each to the power of $n^{2}(k)$ and it is usually the case that $1 < \mathbb{C}_l,\mathbb{C}_r < \mathbb{S}$.  The bad numerical properties are even more exacerbated with the twist parameters, since usually $1 < \mathbb{T}_l,\mathbb{T}_r < \mathbb{C}$ and are then raised to the $n^{3}(k)$ power.  On top of all that, we then multiply everything together with the goal of obtaining a volatility value that is usually somewhere between zero and one.
 \newpar
 One way to potentially improve the numerical properties of the elasticity inspired parameterizations is to instead analyze the natural log of the volatility smile, and then convert back to normal vol once the optimization is complete.  Making this change to the second order elastic smile gives:
@@ -500,7 +501,7 @@ One way to potentially improve the numerical properties of the elasticity inspir
 \end{align*}
 \label{SecondOrderSmileNaturalLog}
 \newline
-which eliminates the troublesome numerical properties of equation \ref{SecondOrderSmile}.  A similar transformation can also be performed for the first and third order smile parameterizations, but only the modification to the second order is discussed in section \ref{subsec:ResultsChoiceOfOptAlgo}.
+which eliminates the troublesome numerical properties of equation \ref{SecondOrderSmile}.  A similar transformation can also be performed for the first and third order smile parameterizations, but only the modification to the second order is discussed in section \ref{subsec:AddressingNumericalConcerns}.
 \subsubsection{Other Parameterization Methods}
 There are also a number of publicly available optimization styles and parameterizations available to model the volatility smile.  Other methods are not included in the analysis here, but for the curious reader, a few notable ones are named below.
 \begin{enumerate}
@@ -639,17 +640,17 @@ Pseudocode for the C\# implementation of the Levenberg-Marquardt algorithm is as
 \end{enumerate}
 
 \subsection{Trading Simulations}\label{sec:TradingStrategies}
-The end goal of this project is to show that the best parameterization of a volatility smile from a mathematical standpoint is not necessarily the best from a trading standpoint.  In addition to well-defined parameterizations, we require a handful of trading simulations that reasonably represent potential real-world trading algorithms.  A trading simulation in this project consists of four pieces: the actual trading strategy, a scope on what it is allowed to trade, imposed limits to simulate risk exposure, and a timeframe for which to execute the simulations.
+The end goal of this project is to show that the best parameterization of a volatility smile from a mathematical standpoint is not necessarily the best from a trading standpoint.  Illustrating this point requires both well-defined parameterizations and a handful of trading simulations that reasonably represent potential real-world trading algorithms.  A trading simulation in this project consists of four pieces: the actual trading strategy, a scope on what it is allowed to trade, imposed limits to simulate risk exposure, and a timeframe for which to execute the simulations.
 
 \subsubsection{Strategies And Scope}
 \label{subsec:TradingStrategiesAndScope}
-A handful of simple trading strategies are included in the analysis, each is based on the concept of trading edge.  We define \textit{trading edge} as the dollar difference between an option's theoretical value and the corresponding bid or ask market price.  For example, suppose an option has a market bid price of \$0.85 and a market ask price of \$1.10.  If the option's theoretical value is evaluated to be \$1.00, then we say the theoretical value has 15 cents of edge with respect to the bid price and 10 cents of edge with respect to the ask price.  If the theoretical value fell below the market bid price or above the market ask price, it is said to have `crossed' the market and thus will have a negative edge.
+Each of the trading strategies analyzed in this project were based on the concept of trading edge.  We define \textit{trading edge} as the dollar difference between an option's theoretical value and the corresponding bid or ask market price.  For example, suppose an option has a market bid price of \$0.85 and a market ask price of \$1.10.  If the option's theoretical value is evaluated to be \$1.00, then we say the theoretical value has 15 cents of edge with respect to the bid price and 10 cents of edge with respect to the ask price.  If the theoretical value falls below the market bid price or above the market ask price, it is said to have `crossed' the market and thus will have a negative edge.
 \newpar
-The concept of edge need not be limited to precise dollar amounts.  It can also be expressed as the percent of edge relative to the total market width.  For example, if an option in the marketplace is currently \$1.00 bid and \$2.00 offered, then a theoretical value of \$1.35 will have 35\% edge relative to the bid and 65\% edge relative to the offer\footnote{The market width is \$1.00, thus \$1.35 is 35\% above the bid and 65\% below the ask price}.  Both raw dollar edge and percent-edge trading strategies are analysed in this project.
+The concept of edge need not be limited to precise dollar amounts.  It can also be expressed as the percent of edge relative to the total market width.  For example, if an option market quote is currently \$1.00 bid and \$2.00 offered, then a theoretical value of \$1.35 will have 35\% edge relative to the bid and 65\% edge relative to the offer\footnote{The market width is \$1.00, thus \$1.35 is 35\% above the bid and 65\% below the ask price}.  Both raw dollar edge and percent-edge trading strategies are analyzed in this project.  This project examined trading strategies within the edge ranges of $[-\$0.15, \$0.15]$ and $[-15\%, 15\%]$.
 \newpar
-The trading strategies analyzed each evaluate the theoretical edge and make trades on a single option-by-option basis rather than groups of options.  It is common to have trading strategies that trade specific groups of options at a time such as straddles, butterflies, or any other intra-expiration spread.  This added unneccessary complexity to the project and has been left out of the analysis here.
+The analyzed trading strategies each evaluate the theoretical edge and make trades on a single option-by-option basis rather than groups of options.  It is not uncommon to have trading strategies that trade specific groups of options at a time such as straddles, butterflies, or any other intra-expiration spread.  This added unnecessary complexity to the project and has been left out of the analysis here.
 \newpar
-It is possible to encounter situations where there isn't as much trading size as one would like to trade.  For example, if only four contracts are available for a particular side of the market, then clearly one cannot trade more than four on that line.  Some real-world trading strategies may also take into account the size available when determining whether or not to make a trade.  This type of analysis - trading based on available market size - is left out of this project.  All trading algorithms utilized in this project will trade any available market size up to a mazimum quantity of ten per trade.
+It is possible to encounter situations where the market quote provides fewer contracts than one would like to trade.  If only four contracts are available for a particular side of the market for example, then clearly one cannot trade more than four on that line.  Some real-world trading strategies may take the size of the market quote into account when determining whether or not to make a trade.  This type of analysis - trading based on available market size - is left out of this project.  All trading algorithms utilized in this project trade any available market size up to a maximum quantity of ten per trade.  In other words, if the market size is less than ten, the trading simulation will trade the number of available contracts.
 \newpar
 Finally, we limit each trading simulation to only make trades within the domain of a single expiration for a single underlying asset.  More complex trading strategies exist such as time spreads (inter-expiration) or spreads between stocks.  Such trading strategies add go beyond the scope of this project.
 
@@ -662,9 +663,9 @@ Finally, trading simulations were allowed to make trades at one-minute intervals
 \subsection{The C\# program}
 The data was analyzed with the help of a custom-written C\# program that read saved data files from a particular folder and allowed simulations to run on any combination of stock, expiration, fit parameterization, weighting scheme, and trading style desired for the given dataset.
 \newpar
-The reasoning for creating an entire software program to run simulations was due to the sheer amount of data to analyze.  Suppose we wanted to run a simulation for just a single expiration date for a single stock four different parameterization schemes, two different optimization strategies, five different trading strategies, and one-minute trading intervals.  This means that for each data snapshot at each trading interval there are $4 \times 2 \times 5 = 40$ combinations of expiration, parameterization, and trading scheme to analyze.  At one minute trading intervals, we take 388 data snapshots per day, creating a set of $388 \times 40 = 15,520$ simulations to be run.
+The reasoning for creating an entire software program to run simulations was due to the sheer amount of data to analyze.  Suppose we wanted to run a simulation for just a single expiration date for a single stock, five different parameterization schemes, two different optimization algorithms, five different trading strategies, and one-minute trading intervals.  This would mean that for each data snapshot at each trading interval there are $5 \times 2 \times 5 = 50$ combinations of expiration, parameterization, and trading scheme to analyze.  At one minute trading intervals, we take 388 data snapshots in a single trading day, creating a set of $388 \times 50 = 19,400$ simulations per day to be run.
 \newpar
-From the survace, the software program performed the following steps on the data provided to it:
+At the surface, the software program performed the following steps on the data provided to it:
 \begin{enumerate}
 	\item For a given stock and expiration, group the data into unique combinations of optimization algorithm, weighting scheme, and trading style.\label{item:GroupData}
     \item For every data set matching the underlying and expiration date chosen in step \ref{item:GroupData}, process the market data by
@@ -693,6 +694,7 @@ The end project scope was eventually downsized from the original goal in an effo
     \begin{enumerate}
         \item Basic (section \ref{subsec:BasicParameterizations}):  Raw, Linear, Quadratic
         \item Elastic (section \ref{subsec:ElasticityParameterizations}): Elastic, Smile, Twist
+        \item Modified Elastic (section \ref{subsec:NatLogElasticMod}): Smile, Twist
     \end{enumerate}
     \item Nonlinear least squares optimization algorithms (section \ref{subsubsec:GNLM})
     \begin{enumerate}
@@ -701,11 +703,11 @@ The end project scope was eventually downsized from the original goal in an effo
     \end{enumerate}
     \item Nonlinear optimization weighting schemes (section \ref{sec:WeightingSchemes}): Evenly, VolWidth, VolWidthVegaMult
     \item Trading strategies (section \ref{sec:TradingStrategies}):  Single-option edge strategies at quarter segments of $+-0.15$ cents of edge and $+-15$ percent width edge.
-    \item One minute trading interval.
 \end{enumerate}
-Note that the above results in 20,113,920 separate simulations\footnote{Total of six expirations between two stocks, six parameterizations, two optimization algorithms, three weighting schemes, 240 trading edge zones, 388 market data snapshots.  $6 \times 6 \times 2 \times 3 \times 240 \times 388 = 20,113,920$}.  This number can be reduced through the realization that simulations run using the Raw parameterization do not execute any optimization process, and thus many of the simulations will yeild the same results, regardless of choice in optimization algorithm or weighting scheme.
+Note that the above results in 26,818,560 separate simulations\footnote{Total of six expirations between two stocks, eight parameterizations, two optimization algorithms, three weighting schemes, 240 trading edge zones, 388 market data snapshots.  $6 \times 8 \times 2 \times 3 \times 240 \times 388 = 26,818,560$}.  This number can be reduced through the realization that simulations run using the Raw parameterization do not execute any optimization process, and thus many of the simulations will yeild the same results, regardless of choice in optimization algorithm or weighting scheme.
 
 \subsection{A Visual Example}
+\label{sec:AVisualExample}
 For the more visually inclined, let's consider options for TSLA that shared the same expiration date of March 16\textsuperscript{th}, 2018.  At about 11:45 AM CDT on February 12\textsuperscript{th}, 2018, the market prices are displayed in Figure \ref{fig:SampleOptMarketPrices}.  Since it is difficult to see the separation between the bid and ask prices on a plot, Table \ref{table:SampleOptionMarketDetail} shows the actual values around where the call and put prices cross. 
 
 \begin{figure}[H]
@@ -833,7 +835,7 @@ It should be clear from the previous plots that some parameterizations are very 
 \section{Results and Discussion} \label{sec:Results}
 Even after trimming the total possible scope down significantly, there are still many moving parts in this project\footnote{Removed parts include, but are not limited to:  hedging, near earnings move analysis, exchange and trading fees, other option pricing models, other closed-form and non closed-form volatility smile models, market data speed (maybe we are too slow to get on a trade or off a trade that we want), other trading strategies that involve market-making or inter-expiration trading, profit and loss beyond a single trading day, alternate stocks that have dividends, significantly positive or negative interest rates}.  Each moving part is individually isolated and analyzed to illustrate the mathematical and practical implications that arise for a given choice made at each step in the entire process.
 \newpar
-Unless otherwise specified, any results presented here are those from simulations conducted with the Gauss-Newton algorithm (\ref{subsubsec:GNLM}), vol width vega multiplier weighting (\ref{sec:WeightingSchemes}), the tiny percent edge trader (\ref{subsec:TradingStrategiesAndScope}), one minute trading intervals, and risk bounds between -1000 and 1000 deltas (\ref{subsec:RiskExposureAndTimeFrame}).
+Unless otherwise specified, any results presented here are those from simulations conducted with the Gauss-Newton algorithm (\ref{subsubsec:GNLM}), vol width vega multiplier weighting (\ref{sec:WeightingSchemes}), a [0.0, 2.5] percent edge trader (\ref{subsec:TradingStrategiesAndScope}), one minute trading intervals, and risk bounds between -1000 and 1000 deltas (\ref{subsec:RiskExposureAndTimeFrame}).
 \newpar
 Section \ref{subsec:ResultsChoiceOfFunc} shows the mathematical and practical implications of parameterization choice, \ref{subsec:ResultsChoiceOfWeight} illustrates the affects of a choice in weighting scheme, \ref{subsec:ResultsChoiceOfOptAlgo} presents observed differences when using the Gauss-Newton or Levenberg-Marquardt optimization algorithms, and finally \ref{subsec:ResultsChoiceOfTradingStrategy} shows the performance of different trading strategies.  All analysis is performed using three data sets taken on February 12\textsuperscript{th}, 2018:  TSLA options expiring on 3/16/18 and 1/18/19, and NVDA options expiring on 1/18/19.
 \newpar
@@ -842,7 +844,7 @@ When comparing chosen model functions from a mathematical standpoint, the coeffi
 The concepts of `realized' and `unrealized' positions were utilized to assess the performance trading simulations over the course of the trading day.  The `realized' position is simply the current cash position caused by buying or selling options.  The `unrealized' position represents the amount it would cost to liquidate all open positions based on a snapshot of market prices.  The unrealized and realized positions were recalculated at each trading interval, after the trading simulation ran.  The sum of these two types of positions provides the end performance measure - it represents the amount of cash one would walk away with should the decision be made to liquidate all open positions immediately while also taking into account the amount of capital put forward to arrive at such a position.
 
 \subsection{Choice of Function Definition}\label{subsec:ResultsChoiceOfFunc}
-For all of the following results presented in this section, the simulation frequency, weighting style, optimization algorithm, and trading algorithm are all held constant\footnote{one-minute intervals, VWVM, Gauss-Newton, and Tiny \%-Edge respectively}.  The only change between simulations was the model choice.
+For all of the following results presented in this section, the simulation frequency, weighting style, optimization algorithm, and trading algorithm are all held constant\footnote{one-minute intervals, VWVM, Gauss-Newton, and [0.0, 2.5] \%-Edge respectively}.  The only change between simulations was the model choice.
 \newpar
 For TSLA 3/16/18, the following profit or loss was observed after each simulation run for each model choice:
 
@@ -1052,6 +1054,68 @@ Given identical initial values $\lambdaVect_0$ for the parameter vector, the ave
     \end{tabular}
 \end{center}
 
+\subsection{Addressing Smile and Twist Numerical Concerns}
+\label{subsec:AddressingNumericalConcerns}
+Aforementioned in section \ref{subsec:NatLogElasticMod}, the construction of the Smile and Twist functions (\ref{subsec:ElasticityParameterizations}) has poor numerical properties.  Namely, the fact that the parameters tend to be positive yet much less than one while raised to an exponent that can get exponentially higher as you move away from the forward price.  One potential adjustment to improve the numerical computationality of the Smile and Twist functions was to perform the optimization in natural-logarithm-volatility space.  The mathematical results between all three datasets for optimizations occurring over the single test day are summarized in table \ref{tab:ModSmileTwistOverallAlgoEfficiency}:
+
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{Modified Smile \& Twist Overall Optimization Algorithm Efficiency}
+    \label{tab:ModSmileTwistOverallAlgoEfficiency}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Model \& Algo} & \textbf{Avg \# Steps} & \textbf{Avg \# Matrix Solves} \\ \hline
+        Modified Smile GN   &   3.00    &   3.00 \\ \hline
+        Modified Smile LM   &   5.01    &   5.02 \\ \hline
+        Modified Twist GN   &   3.00    &   3.00 \\ \hline
+        Modified Twist LM   &   7.99    &   8.00 \\ \hline
+    \end{tabular}
+\end{center}
+
+Trading profitability is also important in this project.  Thus, below are the modified Smile and Twist trading simulation results compared to the original Smile and twist results from section \ref{subsec:ResultsChoiceOfFunc}:
+
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{TSLA 3/16/18 Modified Smile \& Twist Profitability}
+    \label{tab:ModSmileTwistProfit_TSLA_Mar}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Function} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Avg At Close} \\ \hline
+        Smile 	         & \$11,980  & -\$5,800 & 10   & \$450.50	\\ \hline
+        Modified Smile   & \$10,895  & -\$5,722 & 12   & \$300.00   \\ \hline
+        Twist 	         & \$10,271  & -\$5,753	& 13   & \$273.46	\\ \hline
+        Modified Twist   & \$10,334  & -\$5,753 & 14   & \$295.71   \\ \hline
+    \end{tabular}
+\end{center}
+
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{TSLA 1/18/19 Modified Smile \& Twist Profitability}
+    \label{tab:ModSmileTwistProfit_TSLA_Jan}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Function} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Avg At Close} \\ \hline
+        Smile 	        & \$7,710 	& -\$6,053	 & 34  	& -\$56.41	    \\ \hline
+        Modified Smile  & \$1,300   & \$3,693    & 15   &  -\$234.87     \\ \hline
+        Twist 	        & \$785 	& -\$437	 & 6	&  \$25.00	    \\ \hline
+        Modified Twist  & \$785     & -\$437     & 6    &  \$25.00      \\ \hline
+    \end{tabular}
+\end{center}
+
+\begin{center}
+    \captionsetup{hypcap=false}
+    \captionof{table}{NVDA 1/18/19 Modified Smile \& Twist Profitability}
+    \label{tab:ModSmileTwistProfit_NVDA_Jan}
+    \begin{tabular}{ |>{\columncolor{Gray}}c|c|c|c|c| }
+        \hline \rowcolor{LightGreen}
+        \textbf{Function} & \textbf{Max Profit} & \textbf{Max Loss} & \textbf{\# Trades} & \textbf{Avg At Close} \\ \hline
+        Smile 	         & \$11,842 & -\$4,463	 & 23  	&  \$78.78	    \\ \hline
+        Modified Smile   & \$4,518  & -\$3,473   & 13   & -\$31.00      \\ \hline
+        Twist 	         & \$1,400 	& -\$4,796	 & 8	& -\$365.75	    \\ \hline
+        Modified Twist   & \$1,390  & -\$6,590   & 12   & -\$296.25      \\ \hline
+    \end{tabular}
+\end{center}
+
 \subsection{Choice of Trading Strategy} \label{subsec:ResultsChoiceOfTradingStrategy}
 The profit and loss results presented in previous sections \ref{subsec:ResultsChoiceOfFunc}, \ref{subsec:ResultsChoiceOfOptAlgo}, and \ref{subsec:ResultsChoiceOfWeight} were computed using an arbitrarily chosen trading strategy.  This strategy will only make trades when the resulting theoretical value is within 2.5\% of the market width from either the bid or ask price (if safeties allow it).
 \newpar
@@ -1113,12 +1177,57 @@ Looking at all the determined practical trading ranges together, if a trader was
 
 With the optimal edge range being employed, the observed lowest loss was -\$6,310 and the highest gain was \$16,237, with an end of day profit of \$8,232.
 
+\subsection{A Note on Rounding}
+All of the previous profit and loss analysis was performed without rounding any values at any point in the simulation process.  While rounding is a completely reasonable thing to consider since you cannot make trades on fractions of a penny, rounding was found to be only detrimental to the simulated trading portfolio.  To illustrate this, consider simulations performed with the Smile model as in in figure \ref{fig:TSLA_Mar_SmileTwist}.  Below is a profit and loss plot from simulations with the exact same parameters as in figure \ref{fig:TSLA_Mar_SmileTwist} except with rounded theoretical values:
+
+\img{TSLA 3/16/18 Smile Profit Under Theoretical Value Rounding}{TSLA_Mar_SmileRounding}{fig:SmileRounding}
+
+In the above example, diminishing returns were observed the more the theoretical values were rounded.  While this does not definitively mean that rounding is always a bad idea, this result was observed in all scopes of this project.
+
+\label{subsec:ANoteOnRounding}
+
 \newpage
 \section{Conclusion} \label{sec:DiscussionAndConclusion}
+The financial landscape in today's world continues to grow and expand.  Making practical use of it all can be a daunting task - even the sheer amount of information flowing through the financial exchanges can be pretty mind-boggling.  Indeed, during the first three months of 2018 the Option Price Reporting Agency (OPRA), which only handles trades and quotes on USA options exchanges, reported a peak data flow of 13.5 million messages per second and 30.6 billion transactions per day\footnote{See ``Key Operating Metrics of U.S. Options Securities Information Processor (OPRA SIP)'' documentation at https://www.opraplan.com for more details.}.
+\newpar
+This project took a small slice of the American Option landscape and showed from start to finish some ways to make use out of the plethora information available.  To do this, the entire process was broken up into three stages:  market data processing, modelling and optimizing, and finally trade simulating.  All three stages each require individual sets of steps to complete, and choices made along the way for each step have real-world consequences for stages and steps further down in the process line, and eventually one's portfolio.  A single example of the entire process from start-to-finish is provided in section \ref{sec:AVisualExample}
 
-\subsection{A Note on Rounding}
+Focus of this project remained in the middle and final stages, thus the market data processing stage (section \ref{subsec:MarketDataProcessing}) was held constant throughout.  Option and stock quote data were collected from TSLA and NVDA American equities at one-minute intervals during the February 12\textsuperscript{th}, 2018 trading day.  This data set was further trimmed down for analysis, which finally covered TSLA 3/16/18, TSLA 1/18/19, and NVDA 1/18/19 options.
+\newpar
+Once collected, the market data was processed prior to moving on to the modelling and optimizing stage.  The processing was made up of two steps:  The first involved converting the option market prices into volatilities (section \ref{sec:ConvertingToVol}, and the second involved three empirically-driven implied volatility smoothing algorithms (section \ref{sec:FilteringMethods}.  Together, the desired end result of a single set of $(strike, volatility)$ pairs (the `option volatility smile') was created and then fed into the modelling and optimization stage.
 
-\newpage
+\subsection{On Models}
+From a mathematical standpoint, the Smile and Twist models showed to be the best representations of the option volatility curve.  After combining the $R^{2}$ results from the three analyzed data sets and grouping by model, it was clear that the Smile and Twist models were mathematically preferable to the Linear, Quadratic, and Elastic models. Compared to the Smile and Twist model choices, the other three resulted in optimization $R^{2}$ values that were overall distributed lower and wider than the $R^{2}$ values from Smile and Twist.  Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2Hist},
+\ref{fig:SmileR2Hist}, \ref{fig:TwistR2Hist} illustrate this point when holding the weighting constant: both the Smile and Twist $R^{2}$ values across all Gauss-Newton optimization processes are overall higher than the poorer model choices and tend closer to $R^{2} = 1$.
+\newpar
+For analyzing the portfolio consequences of a particular model choice, the trading simulation algorithm was held constant during the analysis of the modelling and optimization stage to help isolate the affect of changes on the resulting portfolio.  In particular, the trading parameters were kept at [0.0, 2.5] \%-edge bounds (see section \ref{subsec:TradingStrategiesAndScope}) with a delta risk limit of $\pm 1000$ (see section \ref{subsec:RiskExposureAndTimeFrame}).
+\newpar
+Unsurprisingly, the choice in model function seemed to have the most significant impact on the simulated portfolios.  The more deficient model choices were that of the Linear, Quadratic, and Elastic functions, and all yielded negative portfolios at the end of the trading day regardless of the chosen data set.  In fact, it is clear from figures \ref{fig:TSLA_Mar_LinQuadElast}, \ref{fig:TSLA_Jan_LinQuadElast}, and \ref{fig:NVDA_Jan_LinQuadElast} that only the TSLA 3/16/18 expiration showed some glimmers of hope for a positive portfolio.
+\newpar
+Best results overall were found with the Smile and Twist model choices, but one must still tread carefully when using these models - one model does not fit all.  For the TSLA 3/16/18 expiration data, both Smile and Twist models performed well, with figure \ref{fig:TSLA_Mar_SmileTwist} showing what appears to be an upward trend in portfolio value after 10:30 AM for both models.  The TSLA 1/18/19 (figure \ref{fig:TSLA_Jan_SmileTwist}) and NVDA 1/18/19 (figure \ref{fig:NVDA_Jan_SmileTwist}) expirations however showed only a positive end-of-day portfolio for the Twist model or Smile model respectively.
+\newpar
+The findings here are consistent with real world usage of the elasticity model, where the number of parameters has in some cases been expanded out to five on each side in an effort to provide a better model for the volatility smile.  Thus the recommendation of the number of parameters to use needs to be determined on a case-by-case basis, and at some point it matters more what one does with the provided theoretical values than theoretical differences of less than a penny between the models.  In practice, smaller strike ranges did better with the Smile model while larger strike ranges required an expansion of the parameters as in Twist or other higher order extensions.
+\newpar
+Among all five of the models analyzed in this project, one consistent finding was that trading simulations which made fewer trades performed better where other others with more trades performed worse.  This is quantitatively shown in tables \ref{table:TSLA_Mar_FuncChoiceProfitDetail}, \ref{table:TSLA_Jan_FuncChoiceProfitDetail}, and \ref{table:NVDA_Jan_FuncChoiceProfitDetail}.  From a risk standpoint, fewer trades mean a lower risk, and in a way the better models lend the trading simulations to be more cautious with what trades are made.
+\newpar
+One could argue that some of the `poorer' model choices have points of much higher profit than the other `better' models.  While this is true in some cases, the proper conclusion is that this is a lucky result.  Take for example simulations performed with the linear model for the TSLA 3/16/18 dataset: near the end of the day the simulated portfolio was up almost \$28,000!  But throughout most of the day the portfolio was losing money, and in the moment there is no way to know if it will ever recover.  In fact the lowest loss the portfolio saw was nearly \$48,000, and ended up with a loss of \$5,600 at the end of the trading day.  Additionally, the simulation had made 82 trades - a much larger and less preferable risk exposure than for example the Smile model, which only made 10 trades under the same simulation parameters.
+
+\subsection{On Weighting}
+Five different weighting schemes were tested (see section \ref{sec:WeightingSchemes}) with each of the model functions.  It was clear that the choice in weighting had a very large impact on the resulting profit and loss.  For the Smile and Twist models, the Even, VW, and VWVM\textsuperscript{2} weighting styles always resulted in lower-performing portfolios compared to the VWVM and $\sqrt{\text{VWVM}}$ styles.  When using the Smile model it was sometimes more favorable
+
+\subsection{On Numerical Optimization}
+It should be immediately obvious from table \ref{tab:OverallAlgoEfficiency} that the best choice for optimizing the volatility smile is the Gauss-Newton algorithm.  With the same initial values, the Gauss-Newton algorithm always required fewer steps to arrive at the solution.  Additionally, as discussed in section \ref{subsec:ResultsChoiceOfOptAlgo}, the Levenberg-Marquardt algorithm may require additional matrix solves per step during the optimization process.
+\newpar
+From a simple mathematical standpoint, running the natural log modification of the Smile and Twist resulted in clear numerical improvement when using the Gauss-Newton optimization algorithm but not always with the Levenberg-Marquardt algorithm.  For the Smile function choice, it was always computationally favorable to operate in natural-log-volatility space, regardless of the choice in optimization algorithm.  Surprisingly for the Twist function, one that has worse numerical properties than the Smile function, only the Gauss-Newton algorithm showed improved computational efficiency in the modified volatility space.  On average, the Levenberg-Marquardt algorithm with Twist resulted in a higher number of matrix solves when operating in the modified volatility space than when running the algorithm in original raw volatility space.
+\newpar
+From a profitability standpoint, running optimizations in a natural log space produced poorer performing portfolios for the Smile model.  For the Twist model, portfolios were either equivalent or slightly worse in performance (see tables \ref{tab:ModSmileTwistProfit_TSLA_Mar}, \ref{tab:ModSmileTwistProfit_TSLA_Jan}, and \ref{tab:ModSmileTwistProfit_NVDA_Jan}).  This makes sense when one considers the fact that the optimization occurrs in a different space than the trading algorithm, and the map between the two spaces (volatility and natural log volatility) is nonlinear.
+\newpar
+To truly know if there is better profitability with the nautral log modified Smile and Twist functions, more analysis is needed.  It may be better, for example, to also run the trading simulations in the natural-log space.  Otherwise it is clear from the results that the natural log modification, when utilized for the Smile and Twist models in this way, is not a good idea practically:  The Modified Smile produced better results numerically, but worse results practically, and the Modified Twist produced similar results practically, but worse results numerically.
+
+\subsection{On Trading Strategy}
+
+\subsection{Final Thoughts}
+
 \begin{thebibliography}{3}
 	
     \bibitem{Levenberg}
