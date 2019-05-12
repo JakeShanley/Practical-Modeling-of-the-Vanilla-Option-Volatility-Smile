@@ -38,7 +38,6 @@
 }
 \renewcommand{\abstractname}{\large ABSTRACT}
 \newcommand{\newpar}{\newline \newline}
-\newcommand{\bbrepo}{[Link To BitBucket Here]}
 \newcommand{\lambdaVect}{\pmb{\lambda}}
 \renewcommand{\listtablename}{Tables}
 \renewcommand{\listfigurename}{Figures}
@@ -242,12 +241,12 @@ Let $p$ be the option premium, $k$ be the option strike, and $S$ be the current 
 \begin{multicols}{2}
   \begin{figure}[H]
       \caption{Long a call}
-      \centerline{\includegraphics[width=0.5\textwidth]{Long_Call_Position}}
+      \centerline{\includegraphics[width=0.43\textwidth]{Long_Call_Position}}
       \label{fig:LongACall}
   \end{figure}
   \begin{figure}[H]
       \caption{Short a call}
-      \centerline{\includegraphics[width=0.5\textwidth]{Short_Call_Position}}
+      \centerline{\includegraphics[width=0.43\textwidth]{Short_Call_Position}}
       \label{fig:ShortACall}
   \end{figure}
 \end{multicols}
@@ -255,12 +254,12 @@ Let $p$ be the option premium, $k$ be the option strike, and $S$ be the current 
 \begin{multicols}{2}
   \begin{figure}[H]
     \caption{Long a put}
-    \centerline{\includegraphics[width=0.5\textwidth]{Long_Put_Position}}
+    \centerline{\includegraphics[width=0.43\textwidth]{Long_Put_Position}}
     \label{fig:LongAPut}
   \end{figure}
   \begin{figure}[H]
     \caption{Short a put}
-    \centerline{\includegraphics[width=0.5\textwidth]{Short_Put_Position}}
+    \centerline{\includegraphics[width=0.43\textwidth]{Short_Put_Position}}
     \label{fig:ShortAPut}
   \end{figure}
 \end{multicols}
@@ -291,12 +290,12 @@ Some combinations of the simple strategies listed above are used frequently enou
     \item Call Butterfly
     	\begin{enumerate}
     		\item \textit{long}:  Buy a call at a lower exercise price, sell two calls at a middle exercise price, buy a call at a higher exercise price.
-            \item \textit{short}:  Sell a call at a lower exercise price, sell two calls at a middle exercise price, sell a call at a higher exercise price.
+            \item \textit{short}:  Sell a call at a lower exercise price, buy two calls at a middle exercise price, sell a call at a higher exercise price.
     	\end{enumerate}
     \item Put Butterfly
     	\begin{enumerate}
     		\item \textit{long}:  Buy a put at a lower exercise price, sell two puts at a middle exercise price, buy a put at a higher exercise price.
-            \item \textit{short}:  Sell a put at a lower exercise price, sell two puts at a middle exercise price, sell a call at a higher exercise price.
+            \item \textit{short}:  Sell a put at a lower exercise price, buy two puts at a middle exercise price, sell a call at a higher exercise price.
     	\end{enumerate}
 \end{enumerate}
 Note that the relative quantity of each option involved in the above strategies has been explicitly left out.  This is due to the fact that the above strategies are usually done in such a way as to remain \textit{delta neutral}.  In simple terms, is done in a way so that the position remains neutral to small changes in the underlying asset.  The concept of delta is touched upon further in section \ref{sec:VolAndGreeks}.
@@ -332,9 +331,9 @@ The rho represents the sensitivity of an option's theoretical value to a change 
 \subsubsection{Volatility}
 When determining the theoretical value of an option, volatility plays one of the most important roles.  Changes in the volatility assumption can have significant change on the option's value.  One way to think about volatility is as a rate of return.  However, the difference between volatility and an interest rate is that the interest rate is a one-directional rate (positive rates provide only a positive rate of return, negative rates provide only a negative rate of return).  If a trader were to invest in an option with any nonzero volatility\footnote{Note that volatility is always greater than zero.  An option with a volatility less than or equal to zero has no extrinsic value, because there is no probability of any price change.}, the instrument may go either up or down in price.
 \newpar
-There are many models and theories on how to calculate volatility. The Black-Scholes Model, for example, can be solved for volatility when given an option price.  In addition to being a continuous time model, it also assumes the volatility of an underlying instrument is constant over the life of the option, and that this volatility is continuously compounded.  Additionally, it assumes the stock price moves in geometric Brownian motion.  The result of these (and many other) assumptions is that the possible prices of the option at expiration are lognormally distributed.  In general, one need not be limited to such assumptions - some models assume other price distributions or even a stochastic volatility. An in-depth discussion on how to obtain the implied volatility is the focus of many papers and books and is beyond the scope of this project.
+There are many models and theories on how to calculate volatility. The Black-Scholes Model, for example, can be solved for volatility when given an option price.  In addition to being a continuous time model, it also assumes the volatility of an underlying instrument is constant over the life of the option, and that this volatility is continuously compounded.  Additionally, it assumes the stock price moves in geometric Brownian motion.  The result of these (and many other) assumptions is that the possible prices of the option at expiration are lognormally distributed.  In general, one need not be limited to such assumptions - some models assume other price distributions or even a stochastic volatility. An in-depth discussion on how to obtain the implied volatility is the focus of many papers and books but is beyond the scope of this project.
 \newpar
-Some types of volatility include future volatility, historical volatility, and implied volatility.  For this project, implied volatility will be used exclusively - the volatility calculated from the current market price of an option.  Since it is not possible to invert the Black-Scholes model, one could use the Newton-Raphson method to obtain the implied volatility at a given option price as
+Some types of volatility include future volatility, historical volatility, and implied volatility.  For this project, implied volatility (IV) will be used exclusively - i.e the volatility calculated from the current market price of an option.  Since it is not possible to invert the Black-Scholes model, one could use the Newton-Raphson method to obtain the implied volatility at a given option price as
 \begin{equation*}
 	\sigma_{i+1} = \sigma_{i} - \frac{y_{i} - p}{v_{i}},
 \end{equation*}
@@ -485,7 +484,7 @@ with $\sigma_f$, $\mathbb{S}$, $\mathbb{C}_l$, and $\mathbb{C}_r$, $\mathbb{T}_l
 
 \subsubsection{Natural Log Modification to the Elastic Smile Parameterizations}
 \label{subsec:NatLogElasticMod}
-A keen mathematical mind may notice that the first, second, and third order elastic smile parameterizations may have poor numerical properties.  In particular, it is usually the case that $\mathbb{S} \approx 1$ and $n(k)$ to be quite large - on the order of 1000 or more in many cases.  For the $\mathbb{C}_l$ and $\mathbb{C}_r$ parameters, the poor numerical properties are even further exacerbated since we raise each to the power of $n^{2}(k)$ and it is usually the case that $1 < \mathbb{C}_l,\mathbb{C}_r < \mathbb{S}$.  The bad numerical properties are even more exacerbated with the twist parameters, since usually $1 < \mathbb{T}_l,\mathbb{T}_r < \mathbb{C}$ and are then raised to the $n^{3}(k)$ power.  On top of all that, we then multiply everything together with the goal of obtaining a volatility value that is usually somewhere between zero and one.
+A keen mathematical mind may notice that the first, second, and third order elastic smile parameterizations may have poor numerical properties.  In particular, it is usually the case that $\mathbb{S} \approx 1$ and $n(k)$ to be quite large - on the order of 1000 or more in many cases.  For the $\mathbb{C}_l$ and $\mathbb{C}_r$ parameters, the poor numerical properties are even further exacerbated since we raise each to the power of $n^{2}(k)$ and it is usually the case that $1 < \mathbb{C}_{l,r} < \mathbb{S}$.  The bad numerical properties are even more exacerbated with the twist parameters, since usually $1 < \mathbb{T}_{l,r} < \mathbb{C}_{l,r}$ and are then raised to the $n^{3}(k)$ power.  On top of all that, we then multiply everything together with the goal of obtaining a volatility value that is usually somewhere between zero and one.
 \newpar
 One way to potentially improve the numerical properties of the elasticity inspired parameterizations is to instead analyze the natural log of the volatility smile, and then convert back to normal vol once the optimization is complete.  Making this change to the second order elastic smile gives:
 \begin{align*}
@@ -524,7 +523,7 @@ From a trading standpoint, not all strikes are created equal.  It is important t
 \end{enumerate}
 
 \subsection{Nonlinear Least Squares Optimization}
-Two algorithms for least squares optimization are compared for each of the chosen parameterization schemes in section \ref{sec:VolSmileParameterizations}:  The Gauss-Newton and Levenberg-Marquardt algorithms.  Both C\# implementations of the algorithms are designed for ease in adding a new parameterization.  One can add a new parameterization by simply defining a few function calls that the algorithm will use, rather than rewriting an entire new copy of the chosen optimization algorithm specifically tailored to the new parameterization scheme\footnote{Note that this algorithmic design pattern only applies to dense datasets such as the option volatility smile, and does not take advantage of any sparsity arguments that can often be made when solving other problems in optimization.}.  Additionally, both the Gauss-Newton and Levenberg-Marquardt algorithms were arbitrarily chosen to stop when the difference between the sum of least squares from the previous step to the current step was less than $10^{-14}$ in magnitude\footnote{At $10^{-14}$ (and even greater), further adjustments yield little to no difference in the resulting theoretical values and thus no notable difference for practical use.}.
+Two algorithms for least squares optimization are compared for each of the chosen parameterization schemes in section \ref{sec:VolSmileParameterizations}:  The Gauss-Newton and Levenberg-Marquardt algorithms.  Both implementations of the algorithms are designed for ease in adding a new parameterization.  One can add a new parameterization by simply defining a few function calls that the algorithm will use, rather than rewriting an entire new copy of the chosen optimization algorithm specifically tailored to the new parameterization scheme\footnote{Note that this algorithmic design pattern only applies to dense datasets such as the option volatility smile, and does not take advantage of any sparsity arguments that can often be made when solving other problems in optimization.}.  Additionally, both the Gauss-Newton and Levenberg-Marquardt algorithms were arbitrarily chosen to stop when the difference between the sum of least squares from the previous step to the current step was less than $10^{-14}$ in magnitude\footnote{At $10^{-14}$ (and even greater), further adjustments yield little to no difference in the resulting theoretical values and thus no notable difference for practical use.}.
 \newpar
 The freely available Math.Net Numerics library\footnote{https://numerics.mathdotnet.com/} for C\# was utilized for necessary linear algebra computations.  This allowed focus to remain on the the optimization algorithm and avoided the unnecessary re-creation of already established and well-known algorithms in linear algebra.
 
@@ -562,7 +561,7 @@ Since most of the model functions analyzed in this project are nonlinear, the mi
 For the outlines of both optimization algorithms, we define the following:
 \begin{itemize}
 \item $s$ as current step number in the iteration 
-\item $J$ as the $N \times M$ Jacobian matrix of the of the function $f(k,\lambdaVect)$.  That is, 
+\item $J$ as the $N \times M$ Jacobian matrix of the function $f(k,\lambdaVect)$.  That is, 
 \begin{equation*}
 	J_{ij} = \frac{\partial f(k_i,\lambdaVect)}{\partial \lambda_j}, \quad i = 1,\cdots, N \quad \text{and} \quad j = 1,\cdots, M.
 \end{equation*}
@@ -584,12 +583,12 @@ for the vector $\pmb{\eta}$.  Pseudocode for the C\# implementation of the this 
           \item Calculate $J$ from $\pmb{f}(k,\lambdaVect_{s})$
           \item Solve $(J^T W J) \pmb{\eta} = J^T W \pmb{d}$ for $\pmb{\eta}$
           \item $\lambdaVect_{s+1} = \lambdaVect_{s} + \pmb{\eta}$
-          \item $stop = |F(\lambdaVect_{s}) - F(\lambdaVect_{s+1})| \leq 10^{-14}$
+          \item $stop = (|F(\lambdaVect_{s}) - F(\lambdaVect_{s+1})| \leq 10^{-14})$
           \item $\lambdaVect_{s} = \lambdaVect_{s+1}$
           \item $s = s + 1$
           \item If $stop$, break out of the loop and go to step \ref{GN_CalcR2}.
       \end{enumerate}
-    \item Calculate $R^2$.\label{GN_CalcR2}
+    \item Calculate the coefficient of determination ($R^2$).\label{GN_CalcR2}
 \end{enumerate}
 
 \textbf{\underline{The Levenberg-Marquardt Algorithm}}
@@ -614,7 +613,7 @@ Let $\Phi(\kappa_s)$ be the sum of squares at step $s$ after applying equation \
     \item Else find the minimum integer $w \geq 1$ such that $\Phi(\kappa_s \rho^w) \leq \Phi(\kappa_{s})$.  Then $\kappa_{s+1} = \kappa_s \rho^w$.
 \end{itemize}
 
-Pseudocode for the C\# implementation of the Levenberg-Marquardt algorithm is as follows:
+Pseudocode for the implementation of the Levenberg-Marquardt algorithm is as follows:
 
 \begin{enumerate}
 	\item $\kappa = 0.01$, $\rho = 2.0$, $\lambdaVect_s = \lambdaVect_0$
@@ -631,12 +630,12 @@ Pseudocode for the C\# implementation of the Levenberg-Marquardt algorithm is as
                         \item Solve $\left(J^{T} W J + \kappa \; \text{diag}(J^{T} W J)\right) \pmb{\eta} = J^{T} W \pmb{d}$ for $\pmb{\eta}$
                         \item $\lambdaVect_{s+1} = \pmb{\lambda}_{s} + \pmb{\eta}$
                     \end{enumerate}
-            \item $stop = |F(\lambdaVect_{s}) - F(\lambdaVect_{s+1})| \leq 10^{-14}$
+            \item $stop = (|F(\lambdaVect_{s}) - F(\lambdaVect_{s+1})| \leq 10^{-14})$
             \item $\pmb{\lambda}_{s} = \lambdaVect_{s+1}$
             \item $s = s + 1$
             \item If $stop$, break out of the loop and go to step \ref{LM_CalcR2}
     	\end{enumerate}
-   \item Calculate $R^2$. \label{LM_CalcR2}
+   \item Calculate the coefficient of determination ($R^2$). \label{LM_CalcR2}
 \end{enumerate}
 
 \subsection{Trading Simulations}\label{sec:TradingStrategies}
@@ -660,7 +659,7 @@ Without imposing limits on how much a trading simulation is allowed to trade, it
 \newpar
 Finally, trading simulations were allowed to make trades at one-minute intervals throughout the trading day, starting one minute after market open and ending one minute before market close.
 
-\subsection{The C\# program}
+\subsection{The Analysis Program}
 The data was analyzed with the help of a custom-written C\# program that read saved data files from a particular folder and allowed simulations to run on any combination of stock, expiration, fit parameterization, weighting scheme, and trading style desired for the given dataset.
 \newpar
 The reasoning for creating an entire software program to run simulations was due to the sheer amount of data to analyze.  Suppose we wanted to run a simulation for just a single expiration date for a single stock, five different parameterization schemes, two different optimization algorithms, five different trading strategies, and one-minute trading intervals.  This would mean that for each data snapshot at each trading interval there are $5 \times 2 \times 5 = 50$ combinations of expiration, parameterization, and trading scheme to analyze.  At one minute trading intervals, we take 388 data snapshots in a single trading day, creating a set of $388 \times 50 = 19,400$ simulations per day to be run.
@@ -704,17 +703,13 @@ The end project scope was eventually downsized from the original goal in an effo
     \item Nonlinear optimization weighting schemes (section \ref{sec:WeightingSchemes}): Evenly, VolWidth, VolWidthVegaMult
     \item Trading strategies (section \ref{sec:TradingStrategies}):  Single-option edge strategies at quarter segments of $+-0.15$ cents of edge and $+-15$ percent width edge.
 \end{enumerate}
-Note that the above results in 26,818,560 separate simulations\footnote{Total of six expirations between two stocks, eight parameterizations, two optimization algorithms, three weighting schemes, 240 trading edge zones, 388 market data snapshots.  $6 \times 8 \times 2 \times 3 \times 240 \times 388 = 26,818,560$}.  This number can be reduced through the realization that simulations run using the Raw parameterization do not execute any optimization process, and thus many of the simulations will yeild the same results, regardless of choice in optimization algorithm or weighting scheme.
+Note that the above results in 26,818,560 separate simulations\footnote{Total of six expirations between two stocks, eight parameterizations, two optimization algorithms, three weighting schemes, 240 trading edge zones, 388 market data snapshots.  $6 \times 8 \times 2 \times 3 \times 240 \times 388 = 26,818,560$}.  This number can be reduced through the realization that simulations run using the Raw parameterization do not execute any optimization process, and thus many of the simulations will yield the same results, regardless of choice in optimization algorithm or weighting scheme.
 
 \subsection{A Visual Example}
 \label{sec:AVisualExample}
 For the more visually inclined, let's consider options for TSLA that shared the same expiration date of March 16\textsuperscript{th}, 2018.  At about 11:45 AM CDT on February 12\textsuperscript{th}, 2018, the market prices are displayed in Figure \ref{fig:SampleOptMarketPrices}.  Since it is difficult to see the separation between the bid and ask prices on a plot, Table \ref{table:SampleOptionMarketDetail} shows the actual values around where the call and put prices cross. 
 
-\begin{figure}[H]
-	\caption{TSLA 3/16/18 Midday Option Prices}
-	\centerline{\includegraphics[width=1\textwidth]{SampleOptionMarket}}
-	\label{fig:SampleOptMarketPrices}
-\end{figure}
+\img{TSLA 3/16/18 Midday Option Prices}{SampleOptionMarket}{fig:SampleOptMarketPrices}
 
 \begin{center}
   \captionsetup{hypcap=false}
@@ -743,7 +738,7 @@ Once the market data snapshot is obtained, each of the market prices are then pu
 	\label{fig:SampleOptionMarketIVs}
 \end{figure}
 
-Note now that many points are now missing from the data, especially at the ends of the strike range.  The reason for this is embedded in the chosen option pricing model.  For the model used in this project, options with extremely low or zero price or options below parity can result in a zero-volatility output.  Recall that an option's value is typically made up of two components:  Intrinsic and Extrinsic value.  The former results from how the option contract is defined and it's strike price relative to the sock price.  The latter consists of other factors, of which the volatility can attribute to.  If for some reason the extrinsic value is zero as in the case of the below parity options, then there is essentially no volatility, and is thus missing from the plot in Figure \ref{fig:SampleOptionMarketIVs}.
+Note now that many points are now missing from the data, especially at the ends of the strike range.  The reason for this is embedded in the chosen option pricing model.  For the model used in this project, options with extremely low or zero price or options below parity can result in a zero-volatility output.  Recall that an option's value is typically made up of two components:  Intrinsic and Extrinsic value.  The former results from how the option contract is defined and it's strike price relative to the stock price.  The latter consists of other factors, of which the volatility can attribute to.  If for some reason the extrinsic value is zero as in the case of the below parity options, then there is essentially no volatility, and is thus missing from the plot in Figure \ref{fig:SampleOptionMarketIVs}.
 \newpar
 Converting the market prices into volatilities gives four sets of data for each strike:  Call Bid, Call Ask, Put Bid, and Put Ask implied volatility.  To be able to run a simple nonlinear least squares optimization process, the four data sets need to be condensed into a single set of data points.  The process by which this was accomplished is described in section \ref{sec:FilteringMethods}.  The result of which are shown in Figure \ref{fig:SampleInputIvs}.
 
@@ -794,7 +789,7 @@ Next, we pick a parameterization, optimization algorithm, and weighting scheme. 
   \label{table:SampleLinElastQuadSmileTwistVolDetail}
 \end{center}
 
-Note that since all the parameterizations are closed form, we are able to obtain a volatility for strikes that were not provided to the optimization process.  Despite this fact, all strikes that are missing input data are ignored during the trading analysis.  The practical reasoning for this is simple:  If there wasn't enough confidence to provide our optimization process with a given point (in this case, strike 325), then we don't want to make any trading decisions on this point, and thus it is ignored.
+Note that since all the parameterizations are closed form, we are able to obtain a volatility for strikes that were not provided as inputs to the optimization process.  Despite this fact, all strikes that are missing input data are ignored during the trading analysis.  The practical reasoning for this is simple:  If there wasn't enough confidence to provide our optimization process with a given point (in this case, strike 325), then we don't want to make any trading decisions on this point, and thus it is ignored.
 \newpar
 Once the optimized volatilites are obtained, they are converted back to theoretical values as in the following figure.  
 
@@ -909,21 +904,8 @@ Finally, results for NVDA 1/18/19 are shown below:
     \end{tabular}
 \end{center}
 
-To illustrate when trades are actually happing, the following six figures show the profit and lost for Smile and Twist for each of the three expirations previously presented (TSLA 3/16/18 and 1/18/19 and NVDA 1/18/19) with trade points marked in vertical dotted red lines:
-
-\img{TSLA 3/16/18 Smile Profit Detail With Trades}{TSLA_Mar_SmileWithTrades}{fig:TSLA_Mar_SmileWithTrades}
-
-\img{TSLA 3/16/18 Twist Profit Detail With Trades}{TSLA_Mar_TwistWithTrades}{fig:TSLA_Mar_TwistWithTrades}
-
-\img{TSLA 1/18/19 Smile Profit Detail With Trades}{TSLA_Jan_SmileWithTrades}{fig:TSLA_Jan_SmileWithTrades}
-
-\img{TSLA 1/18/19 Twist Profit Detail With Trades}{TSLA_Jan_TwistWithTrades}{fig:TSLA_Jan_TwistWithTrades}
-
-\img{NVDA 1/18/19 Smile Profit Detail With Trades}{NVDA_Jan_SmileWithTrades}{fig:NVDA_Jan_SmileWithTrades}
-
-\img{NVDA 1/18/19 Twist Profit Detail With Trades}{NVDA_Jan_TwistWithTrades}{fig:NVDA_Jan_TwistWithTrades}
-
-
+To illustrate when trades are actually happing, please refer to section \ref{subsec:PlotsWithTradeLocationAppendix}, where the previously presented profit and loss plots for the Smile and Twist models are presented with trade points marked.
+\newpar
 Figures \ref{fig:LinearR2Hist}, \ref{fig:QuadraticR2Hist}, \ref{fig:ElasticR2Hist},
 \ref{fig:SmileR2Hist}, \ref{fig:TwistR2Hist} show the distribution of unweighted $R^2$ values for each parameterization choice over all optimizations\footnote{Totaling $390 \times 3 = 1,170$ optimization runs} for all three expirations presented here throughout the simulation day.
 
@@ -967,7 +949,7 @@ Weighting also had significant impact on the trading simulation's profit or loss
         VW 	                    & \$66,093  & -\$50,685     & 158	& \$52.49	\\ \hline
         VWVM                    & \$7,710 	& -\$6,053	    & 34 	& -\$56.41	\\ \hline
         $\sqrt{\text{VWVM}}$    & \$74,807  & -\$29,255     & 70    & \$473.93  \\ \hline
-        $\text{VWVM}^2$         & \$8,283   & -\$4,950      & 9     & \$287.00  \\ \hline
+        $\text{VWVM}^2$         & \$150     & -\$3,785      & 6     & \$-245.00  \\ \hline
     \end{tabular}
 \end{center}
 
@@ -1182,8 +1164,6 @@ All of the previous profit and loss analysis was performed without rounding any 
 
 \img{TSLA 3/16/18 Smile Profit Under Theoretical Value Rounding}{TSLA_Mar_SmileRounding}{fig:SmileRounding}
 
-In the above example, diminishing returns were observed the more the theoretical values were rounded.  While this does not definitively mean that rounding is always a bad idea, this result was observed in all scopes of this project.
-
 \label{subsec:ANoteOnRounding}
 
 \newpage
@@ -1213,7 +1193,11 @@ Among all five of the models analyzed in this project, one consistent finding wa
 One could argue that some of the `poorer' model choices have points of much higher profit than the other `better' models.  While this is true in some cases, the proper conclusion is that this is a lucky result.  Take for example simulations performed with the linear model for the TSLA 3/16/18 dataset: near the end of the day the simulated portfolio was up almost \$28,000!  But throughout most of the day the portfolio was losing money, and in the moment there is no way to know if it will ever recover.  In fact the lowest loss the portfolio saw was nearly \$48,000, and ended up with a loss of \$5,600 at the end of the trading day.  Additionally, the simulation had made 82 trades - a much larger and less preferable risk exposure than for example the Smile model, which only made 10 trades under the same simulation parameters.
 
 \subsection{On Weighting}
-Five different weighting schemes were tested (see section \ref{sec:WeightingSchemes}) with each of the model functions.  It was clear that the choice in weighting had a very large impact on the resulting profit and loss.  For the Smile and Twist models, the Even, VW, and VWVM\textsuperscript{2} weighting styles always resulted in lower-performing portfolios compared to the VWVM and $\sqrt{\text{VWVM}}$ styles.  When using the Smile model it was sometimes more favorable
+Five different weighting schemes were tested (see section \ref{sec:WeightingSchemes}) with each of the model functions.  Regardless of the model, it was clear that the choice in weighting had significant impact on the resulting profit and loss.  Detailed results for the Smile and Twist models were presented in section \ref{subsec:ResultsChoiceOfWeight}.
+\newpar
+The least risky weighting scheme turned out to be VWVM\textsuperscript{2} because this scheme resulted in the fewest amount of trades in the trading simulation.  What this means is that the model more closely fit the mid-market values while still maintaining the desired elasticity shape.  The weighting scheme that resulted in the most consistently positive end-of-day profit per trade was the VWVM scheme, where all but the TSLA 1/18/19 data set yielded a positive portfolio.
+\newpar
+For the remaining three weighting schemes tested (Even, VW, and $\sqrt{\text{VWVM}}$, the results were mixed.  The variance in the portfolio profit or loss when using these three models became much more significant significant and unpredictable than the VWVM and VWVM\textsuperscript{2} schemes.  If, for example, one was to exclusively use the $\sqrt{\text{VWVM}}$ scheme, then he or she might be happy with the apparent-steadiness of the strategy until possibly encountering the situation for the TSLA 1/18/19 data set (table \ref{tab:TSLA_Jan_SmileWeighting}).  Under this data, intra-day profit and loss showed a higher maximum (\$74,807), a lower minimum (-\$29,255), and significantly higher number of trades compared to any of the other examined data set's resulting portfolios under this weighting scheme.  Indeed, one must tread carefully when applying this weighting scheme and maybe consider using one of the more reliable and lower-risk schemes (VWVM or VWVM\textsuperscript{2}) instead.
 
 \subsection{On Numerical Optimization}
 It should be immediately obvious from table \ref{tab:OverallAlgoEfficiency} that the best choice for optimizing the volatility smile is the Gauss-Newton algorithm.  With the same initial values, the Gauss-Newton algorithm always required fewer steps to arrive at the solution.  Additionally, as discussed in section \ref{subsec:ResultsChoiceOfOptAlgo}, the Levenberg-Marquardt algorithm may require additional matrix solves per step during the optimization process.
@@ -1225,9 +1209,30 @@ From a profitability standpoint, running optimizations in a natural log space pr
 To truly know if there is better profitability with the nautral log modified Smile and Twist functions, more analysis is needed.  It may be better, for example, to also run the trading simulations in the natural-log space.  Otherwise it is clear from the results that the natural log modification, when utilized for the Smile and Twist models in this way, is not a good idea practically:  The Modified Smile produced better results numerically, but worse results practically, and the Modified Twist produced similar results practically, but worse results numerically.
 
 \subsection{On Trading Strategy}
+The final step in to complete each simulation involved the chosen trading algorithm.  It is also the most significant step because ultimately what one does with the information generated from the previous steps can make or break the portfolio.  Despite being significantly simplified from real-world algorithms, the tested trading strategies were built off of a real-world concept of theoretical market edge and a handful of real-world pre-trade safety checks.
+\newpar
+In general, the best theoretical edge zones found to make trades tended closer to the 0\% edge mark.  That is, the closer the market was to the generated theoretical value, the more likely that trade would result in a profit by the end of the day.  This can be seen from figures \ref{fig:TSLA_Mar_Smile_ZonePnL} and \ref{fig:TSLA_Mar_Twist_ZonePnL}, where slices from a handful of edge zones are shown.  From these figures, it is clear that the losses quickly become more and more significant as one allows for more difference between the theoretical value and the existing market price.
+\newpar
+Practically, the idea that it is better to trade closer to your theoretical value makes complete sense so long as you trust the value calculated.  This point is further solidified by looking at the `practical' edge in tables \ref{tab:SmileBestAndWorstEdgeZones} and \ref{tab:TwistBestAndWorstEdgeZones}.  The largest `practical' trading zone found between all tested data sets was only [0\%,3.5\%].  This means that if the market width was \$1.00, the trading algorithm would only consider making a trade if the bid or ask price was within \$0.035 of the calculated theoretical value.  In fact, if one is planning on trading multiple stocks and expiration dates (as is very common practice), the safest and best zone for the algorithms to make trades fell within the even more restrictive edge zone of [0\%, 0.005\%].  A trader that was employing this edge zone trading strategy across all three expiration data sets with the Smile algorithm and VWVM weighting scheme could expect a modest end-of-day profit of \$8,232 (see figure \ref{fig:SmileOptimalPnL}).
+\newpar
+Not all trading algorithm parameters are intuitive for maximizing profit and loss.  One demonstrating of this is that of rounding the theoretical value.  A generated theoretical value can be as many digits as the computer has in machine precision, yet the marketplace can only make trades to the nearest allowed dollar fraction increment\footnote{Depending on the underlying asset, sometimes option trades are only allowed to be made in dime or nickel increments.} - usually a penny.  It is logical to conclude that rounding the theoretical value to the nearest allowed trading increment is a good idea.  This was put to the test, with results presented in figure \ref{fig:SmileRounding}.  By simply rounding the theoretical value to the nearest tenth of a penny or whole penny, diminishing returns were observed the more the theoretical values were rounded.  While this does not definitively mean that rounding is always a bad idea in every case, this type of result was observed in all scopes of this project.
 
 \subsection{Final Thoughts}
+The aim of this project was to provide a start-to-finish practical analysis of modelling the vanilla American option.  Namely, what constitutes a `good' volatility smile model, and how other components can affect the practical results.  This was done by splitting up the entire process into three discrete stages:  Processing the observed market data, generating theoretical values from this data, and finally making trading decisions from these theoretical values.  Multiple aspects of each substep within these three stages was isolated and thoroughly analyzed with regards to its affect on simulated portfolios.  This approach sets this paper apart from many others that do not address the processes shown here to have significant impact on the results.  Indeed, every choice made in each substep had measurable impact on the entire process, whether from a mathematical or trader perspective.
+\newpar
+The elasticity-inspired models Smile and Twist performed best among the ones tested.  One should not be used exclusively over the other.  In fact, one may wish to expand the flexibility of even the Twist model through logical expansion and addition of more parameters.  Expanded versions of Twist have been successfully used in production.  The decision on how and which expansion should be used, however, rests solely on the trader.
+\newpar
+The Gauss-Newton optimization algorithm is recommended over the Levenberg-Marquardt algorithm for usage of the Smile and Twist models on the volatility smile.  The post-optimization values are expectedly the same between the two, but the Gauss-Newton algorithm arrives at the optimal solution in consistently fewer computations.  With less burden on the computer processor, quicker results can be acheived, and every nanosecond can count in a high frequency trading world.
+\newpar
+The `Volatility Width Vega Multiplier' weighting scheme OR the square of these weighting values should be applied to each strike-volatility point during the optimization process.  The decision on how and which one to use will need to be more thoroughly vetted before practical application, but the `Volatility Width Vega Multiplier' style has been field tested successfully.
+\newpar
+The trading strategies tested in this project were all percent-edge-based, and built off of basic concepts in a simplified trading environment with some simple safeties employed.  Successful real-world trading algorithms must to take into account many more external factors than are analyzed here.  The algorithm implementation details is usually a closely held secret within the trading firm or even individual trader.  Should a firm be utilizing a percent-edge based trading strategy, however, the results here suggest that the limited trading zone of [0\%, 0.005\%] percent edge be utilized.
+\newpar
+Even with all the analyzed pieces of this project, many existing real-world components have been omitted.  An aspiring trader who wants to take some of the concepts here to the marketplace would be prudent to test in his or her own existing trading environment with the missing items included.  Adding the missing variables to the process presented in this paper would have created unnecessary complexity and would have taken away from one of the fundamental goals of the project: what makes a `good' model for the American option volatility smile.
+\newpar
+As a final word of caution to those looking to apply some of these concepts to marketplace:  Remember that the landscape is ever-changing, and what worked one day may not work the next.  An adaptable, intelligent, and risk-aware trader should prevail.
 
+\newpage
 \begin{thebibliography}{3}
 	
     \bibitem{Levenberg}
@@ -1360,6 +1365,21 @@ Denote the volatility at the forward price $\sigma_0$ as $\sigma_f$, the initial
 \end{equation*}
 
 as given in equation \ref{SecondOrderSmile}.
+
+\subsection{Profit and Loss Plots Showing Trade Locations}\label{subsec:PlotsWithTradeLocationAppendix}
+The following six figures show the profit and lost for Smile and Twist for each of the three expiration data sets previously presented (TSLA 3/16/18 and 1/18/19 and NVDA 1/18/19) with trade points marked in vertical dotted red lines:
+
+\img{TSLA 3/16/18 Smile Profit Detail With Trades}{TSLA_Mar_SmileWithTrades}{fig:TSLA_Mar_SmileWithTrades}
+
+\img{TSLA 3/16/18 Twist Profit Detail With Trades}{TSLA_Mar_TwistWithTrades}{fig:TSLA_Mar_TwistWithTrades}
+
+\img{TSLA 1/18/19 Smile Profit Detail With Trades}{TSLA_Jan_SmileWithTrades}{fig:TSLA_Jan_SmileWithTrades}
+
+\img{TSLA 1/18/19 Twist Profit Detail With Trades}{TSLA_Jan_TwistWithTrades}{fig:TSLA_Jan_TwistWithTrades}
+
+\img{NVDA 1/18/19 Smile Profit Detail With Trades}{NVDA_Jan_SmileWithTrades}{fig:NVDA_Jan_SmileWithTrades}
+
+\img{NVDA 1/18/19 Twist Profit Detail With Trades}{NVDA_Jan_TwistWithTrades}{fig:NVDA_Jan_TwistWithTrades}
 
 \newpage
 \section{Glossary} \label{Glossary}
