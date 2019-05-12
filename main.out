@@ -34,12 +34,18 @@
 \BOOKMARK [2][-]{subsection.4.1}{Choice of Function Definition}{section.4}% 34
 \BOOKMARK [2][-]{subsection.4.2}{Choice of Weighting Scheme}{section.4}% 35
 \BOOKMARK [2][-]{subsection.4.3}{Choice of Optimization Algorithm}{section.4}% 36
-\BOOKMARK [2][-]{subsection.4.4}{Choice of Trading Strategy}{section.4}% 37
-\BOOKMARK [1][-]{section.5}{Conclusion}{}% 38
-\BOOKMARK [2][-]{subsection.5.1}{A Note on Rounding}{section.5}% 39
-\BOOKMARK [1][-]{section.6}{References}{}% 40
-\BOOKMARK [1][-]{section.7}{Appendices}{}% 41
-\BOOKMARK [2][-]{subsection.7.1}{Construction of the Elastic Smile Parameterizations}{section.7}% 42
-\BOOKMARK [3][-]{subsubsection.7.1.1}{First Order}{subsection.7.1}% 43
-\BOOKMARK [3][-]{subsubsection.7.1.2}{Second Order}{subsection.7.1}% 44
-\BOOKMARK [1][-]{section.8}{Glossary}{}% 45
+\BOOKMARK [2][-]{subsection.4.4}{Addressing Smile and Twist Numerical Concerns}{section.4}% 37
+\BOOKMARK [2][-]{subsection.4.5}{Choice of Trading Strategy}{section.4}% 38
+\BOOKMARK [2][-]{subsection.4.6}{A Note on Rounding}{section.4}% 39
+\BOOKMARK [1][-]{section.5}{Conclusion}{}% 40
+\BOOKMARK [2][-]{subsection.5.1}{On Models}{section.5}% 41
+\BOOKMARK [2][-]{subsection.5.2}{On Weighting}{section.5}% 42
+\BOOKMARK [2][-]{subsection.5.3}{On Numerical Optimization}{section.5}% 43
+\BOOKMARK [2][-]{subsection.5.4}{On Trading Strategy}{section.5}% 44
+\BOOKMARK [2][-]{subsection.5.5}{Final Thoughts}{section.5}% 45
+\BOOKMARK [1][-]{section.6}{References}{}% 46
+\BOOKMARK [1][-]{section.7}{Appendices}{}% 47
+\BOOKMARK [2][-]{subsection.7.1}{Construction of the Elastic Smile Parameterizations}{section.7}% 48
+\BOOKMARK [3][-]{subsubsection.7.1.1}{First Order}{subsection.7.1}% 49
+\BOOKMARK [3][-]{subsubsection.7.1.2}{Second Order}{subsection.7.1}% 50
+\BOOKMARK [1][-]{section.8}{Glossary}{}% 51
