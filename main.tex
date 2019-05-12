@@ -15,6 +15,11 @@
 \usepackage{multirow}
 \onehalfspacing
 
+\makeatletter
+\renewcommand*\l@figure{\@dottedtocline{1}{1.5em}{2.75em}}% 3em instead of 2.3em
+\let\l@table\l@figure
+\makeatother
+
 \usepackage{xcolor,colortbl}
 \definecolor{Gray}{gray}{0.85}
 \definecolor{LightCyan}{rgb}{0.88,1,1}
@@ -732,43 +737,23 @@ For the more visually inclined, let's consider options for TSLA that shared the 
 
 Once the market data snapshot is obtained, each of the market prices are then put through the trinomial-lattice based pricing model to arrive at the volatilities in Figure \ref{fig:SampleOptionMarketIVs}.
 
-\begin{figure}[H]
-	\caption{TSLA 3/16/18 Midday Market Volatilities}
-	\centerline{\includegraphics[width=1\textwidth]{SampleOptionMarketIVs}}
-	\label{fig:SampleOptionMarketIVs}
-\end{figure}
+\img{TSLA 3/16/18 Midday Market Volatilities}{SampleOptionMarketIVs}{fig:SampleOptionMarketIVs}
 
 Note now that many points are now missing from the data, especially at the ends of the strike range.  The reason for this is embedded in the chosen option pricing model.  For the model used in this project, options with extremely low or zero price or options below parity can result in a zero-volatility output.  Recall that an option's value is typically made up of two components:  Intrinsic and Extrinsic value.  The former results from how the option contract is defined and it's strike price relative to the stock price.  The latter consists of other factors, of which the volatility can attribute to.  If for some reason the extrinsic value is zero as in the case of the below parity options, then there is essentially no volatility, and is thus missing from the plot in Figure \ref{fig:SampleOptionMarketIVs}.
 \newpar
 Converting the market prices into volatilities gives four sets of data for each strike:  Call Bid, Call Ask, Put Bid, and Put Ask implied volatility.  To be able to run a simple nonlinear least squares optimization process, the four data sets need to be condensed into a single set of data points.  The process by which this was accomplished is described in section \ref{sec:FilteringMethods}.  The result of which are shown in Figure \ref{fig:SampleInputIvs}.
 
-\begin{figure}[H]
-	\caption{TSLA 3/16/18 Midday Input IVs}
-	\centerline{\includegraphics[width=1\textwidth]{SampleInputIvs}}
-	\label{fig:SampleInputIvs}
-\end{figure}
+\img{TSLA 3/16/18 Midday Input IVs}{SampleInputIvs}{fig:SampleInputIvs}
 
 Plotted with the market implied volatilities shown in Figure \ref{fig:SampleOptionMarketIVs} gives the result in Figure \ref{fig:SampleInputIvsWithMarketIvs}.
 
-\begin{figure}[H]
-	\caption{TSLA 3/16/18 Midday Input IVs with Market IVs}
-	\centerline{\includegraphics[width=1\textwidth]{SampleInputAndMktIVs}}
-	\label{fig:SampleInputIvsWithMarketIvs}
-\end{figure}
+\img{TSLA 3/16/18 Midday Input IVs with Market IVs}{SampleInputAndMktIVs}{fig:SampleInputIvsWithMarketIvs}
 
 Next, we pick a parameterization, optimization algorithm, and weighting scheme.  For the Levenberg-Marquardt algorithm and even weighting scheme, the optimized volatilities for each parameterization is shown in Figures \ref{fig:SampleLinElastQuadOptimizations} and \ref{fig:SampleSmileTwistOptimizations}.  In some cases the optimized volatility can nearly or exactly match the input volatility, thus making it difficult to see the differences in a plot.  Table \ref{table:SampleLinElastQuadSmileTwistVolDetail} shows the actual volatility values around where the market prices cross.
 
-\begin{figure}[H]
-	\caption{TSLA 3/16/18 Linear, Elastic, and Quadratic Optimizations}
-	\centerline{\includegraphics[width=1\textwidth]{SampleLinElastQuadOptimizations}}
-	\label{fig:SampleLinElastQuadOptimizations}
-\end{figure}
+\img{TSLA 3/16/18 Linear, Elastic, and Quadratic Optimizations}{SampleLinElastQuadOptimizations}{fig:SampleLinElastQuadOptimizations}
 
-\begin{figure}[H]
-	\caption{TSLA 3/16/18 Smile and Twist Optimizations}
-	\centerline{\includegraphics[width=1\textwidth]{SampleSmileTwistOptimizations}}
-	\label{fig:SampleSmileTwistOptimizations}
-\end{figure}
+\img{TSLA 3/16/18 Smile and Twist Optimizations}{SampleSmileTwistOptimizations}{fig:SampleSmileTwistOptimizations}
 
 \begin{center}
   \captionsetup{hypcap=false}
@@ -793,11 +778,7 @@ Note that since all the parameterizations are closed form, we are able to obtain
 \newpar
 Once the optimized volatilites are obtained, they are converted back to theoretical values as in the following figure.  
 
-\begin{figure}[H]
-	\caption{TSLA 3/16/18 Twist-Optimized Theoretical Values}
-	\centerline{\includegraphics[width=1\textwidth]{SampleTwistOptimizedTheos}}
-	\label{fig:SampleTheoreticalValues}
-\end{figure}
+\img{TSLA 3/16/18 Twist-Optimized Theoretical Values}{SampleTwistOptimizedTheos}{fig:SampleTheoreticalValues}
 
 Detail near the crossing point and next to the market prices is shown in the following table.
 

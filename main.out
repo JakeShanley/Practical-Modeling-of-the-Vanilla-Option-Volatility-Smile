@@ -27,7 +27,7 @@
 \BOOKMARK [2][-]{subsection.3.5}{Trading Simulations}{section.3}% 27
 \BOOKMARK [3][-]{subsubsection.3.5.1}{Strategies And Scope}{subsection.3.5}% 28
 \BOOKMARK [3][-]{subsubsection.3.5.2}{Risk Exposure And Time Frame}{subsection.3.5}% 29
-\BOOKMARK [2][-]{subsection.3.6}{The C\043 program}{section.3}% 30
+\BOOKMARK [2][-]{subsection.3.6}{The Analysis Program}{section.3}% 30
 \BOOKMARK [2][-]{subsection.3.7}{Summary of Project Scope}{section.3}% 31
 \BOOKMARK [2][-]{subsection.3.8}{A Visual Example}{section.3}% 32
 \BOOKMARK [1][-]{section.4}{Results and Discussion}{}% 33
@@ -48,4 +48,5 @@
 \BOOKMARK [2][-]{subsection.7.1}{Construction of the Elastic Smile Parameterizations}{section.7}% 48
 \BOOKMARK [3][-]{subsubsection.7.1.1}{First Order}{subsection.7.1}% 49
 \BOOKMARK [3][-]{subsubsection.7.1.2}{Second Order}{subsection.7.1}% 50
-\BOOKMARK [1][-]{section.8}{Glossary}{}% 51
+\BOOKMARK [2][-]{subsection.7.2}{Profit and Loss Plots Showing Trade Locations}{section.7}% 51
+\BOOKMARK [1][-]{section.8}{Glossary}{}% 52
